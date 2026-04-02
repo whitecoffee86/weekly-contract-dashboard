@@ -127,7 +127,7 @@
   <div class="header">
     <div class="header-left">
       <h1>주간 계약 트랜드</h1>
-      <p>Weekly Contract Trend Dashboard · 자이 분양 현황</p>
+      <p>Weekly Contract Trend Dashboard</p>
     </div>
     <div class="header-right">
       <button class="btn btn-ghost" onclick="showTab('data')">✏️ 데이터 입력</button>
@@ -234,27 +234,31 @@ const CM={
   '공사비확보':{color:'#10b981',bg:'rgba(16,185,129,0.12)',cls:'cg',ist:'ist-g',icon:'🟢'},
   '신규':    {color:'#f59e0b',bg:'rgba(245,158,11,0.12)',cls:'cs',ist:'ist-s',icon:'🟡'},
 };
-let weeks=['1주(2/27~3/5)','2주(3/6~3/12)','3주(3/13~3/19)','4주(3/20~3/26)','5주차','6주차'];
+let weeks=['1주(3/6~3/12)','2주(3/13~3/19)','3주(3/20~3/26)','4주(3/27~4/2)','5주차','6주차'];
 let projects=[
-  {cat:'집중관리',name:'음성자이센트럴시티(충북)',   values:[null,1,null,null,null,null]},
-  {cat:'집중관리',name:'아산자이그랜드파크2단지(충남)',values:[null,null,null,1,null,null]},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',      values:[null,2,null,null,null,null]},
-  {cat:'집중관리',name:'원주자이센트로(강원)',        values:[3,4,null,4,null,null]},
-  {cat:'일반',name:'별내자이더스타이그제큐티브',      values:[null,null,null,null,null,null]},
-  {cat:'일반',name:'은평자이더스타',                  values:[null,null,null,null,null,null]},
-  {cat:'일반',name:'운암자이포레나퍼스티체',          values:[3,null,1,null,null,null]},
-  {cat:'일반',name:'양산자이파크팰리체(경남)',        values:[2,2,2,2,null,null]},
-  {cat:'일반',name:'도룡자이라피크(대전)',            values:[null,1,3,2,null,null]},
-  {cat:'일반',name:'안양자이헤리티온(경기)',          values:[null,null,44,null,null,null]},
-  {cat:'일반',name:'수지자이에디시온(경기)',          values:[5,17,7,10,null,null]},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',      values:[298,137,106,53,null,null]},
-  {cat:'공사비확보',name:'대구역자이더스타(대구)',    values:[1,null,null,null,null,null]},
-  {cat:'공사비확보',name:'여주역자이헤리티지',        values:[null,null,null,null,null,null]},
-  {cat:'공사비확보',name:'순천그랜드파크자이',        values:[null,null,null,null,null,null]},
-  {cat:'공사비확보',name:'성성자이레이크파크',        values:[null,null,null,null,null,null]},
-  {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',values:[null,null,null,null,null,null]},
-  {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',values:[null,null,null,null,null,null]},
-  {cat:'신규',name:'구리역 하이니티 리버파크',       values:[null,null,null,null,null,null]},
+  // 집중관리: 1주=3/6~3/12, 2주=3/13~3/19, 3주=3/20~3/26, 4주=3/27~4/2
+  {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[1,null,null,null,null,null]},
+  {cat:'집중관리',name:'아산자이그랜드파크2단지(충남)', values:[null,null,1,1,null,null]},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[2,null,null,3,null,null]},
+  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[4,null,4,2,null,null]},
+  // 일반
+  {cat:'일반',name:'별내자이더스타이그제큐티브',        values:[null,null,null,null,null,null]},
+  {cat:'일반',name:'은평자이더스타',                    values:[null,null,null,null,null,null]},
+  {cat:'일반',name:'운암자이포레나퍼스티체',            values:[null,1,null,null,null,null]},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[2,2,2,6,null,null]},
+  {cat:'일반',name:'도룡자이라피크(대전)',              values:[1,3,2,1,null,null]},
+  {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,44,null,null,null,null]},
+  {cat:'일반',name:'수지자이에디시온(경기)',            values:[17,7,10,15,null,null]},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[137,106,53,44,null,null]},
+  // 공사비확보
+  {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,null,null,2,null,null]},
+  {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
+  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,null,null,1,null,null]},
+  {cat:'공사비확보',name:'성성자이레이크파크',          values:[null,null,null,null,null,null]},
+  {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',  values:[null,null,null,null,null,null]},
+  {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',  values:[null,null,null,null,null,null]},
+  // 신규
+  {cat:'신규',name:'구리역 하이니티 리버파크',         values:[null,null,null,null,null,null]},
 ];
 
 const v=x=>x||0;
