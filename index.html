@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주간 계약 트랜드 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: rgba(255,255,255,0.07);
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --text: #f1f5f9;
+    --muted: #64748b;
+    --muted2: #94a3b8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Pretendard', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── 배경 효과 ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(79,142,247,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(124,58,237,0.10) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; padding: 2rem 2.5rem; max-width: 1600px; margin: 0 auto; }
+
+  /* ── 헤더 ── */
+  .header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-left h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+  }
+  .header-left p { font-size: 0.8rem; color: var(--muted); font-weight: 400; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header-right { display: flex; gap: 0.75rem; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.8rem; font-weight: 600; font-family: 'Pretendard', sans-serif;
+    cursor: pointer; border: none; transition: all 0.18s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6a9ef8; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,142,247,0.35); }
+  .btn-ghost { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface); color: var(--text); }
+
+  /* ── KPI 카드 ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.4rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: var(--kpi-color);
+  }
+  .kpi-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--kpi-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  .kpi-label { font-size: 0.75rem; color: var(--muted2); font-weight: 500; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
+  .kpi-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--text); line-height: 1; }
+  .kpi-sub { font-size: 0.73rem; color: var(--muted); margin-top: 0.5rem; }
+  .kpi-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 0.68rem; font-weight: 600;
+    padding: 2px 7px; border-radius: 20px;
+    margin-top: 0.5rem;
+  }
+  .badge-down { background: rgba(239,68,68,0.15); color: #f87171; }
+  .badge-up { background: rgba(16,185,129,0.15); color: #34d399; }
+  .badge-neutral { background: rgba(100,116,139,0.15); color: var(--muted2); }
+
+  /* ── 메인 그리드 ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .full-width { grid-column: 1 / -1; }
+
+  /* ── 차트 카드 ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .card-title { font-size: 0.875rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+  .card-subtitle { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .chart-wrap { position: relative; height: 220px; }
+  .chart-wrap-lg { position: relative; height: 260px; }
+
+  /* ── 테이블 ── */
+  .table-wrap { overflow-x: auto; margin-top: 0.5rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead th {
+    text-align: left; padding: 0.6rem 0.875rem;
+    font-size: 0.7rem; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th:not(:first-child) { text-align: right; }
+  tbody tr { transition: background 0.12s; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+  tbody td {
+    padding: 0.65rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted2);
+    white-space: nowrap;
+  }
+  tbody td:first-child { color: var(--text); font-weight: 500; }
+  tbody td:not(:first-child) { text-align: right; font-family: 'DM Mono', monospace; font-size: 0.8rem; }
+  td.total-col { color: var(--accent); font-weight: 700; }
+  .bar-cell { min-width: 80px; }
+  .mini-bar { height: 4px; background: rgba(255,255,255,0.07); border-radius: 99px; margin-top: 4px; }
+  .mini-bar-fill { height: 4px; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  tfoot td {
+    padding: 0.75rem 0.875rem;
+    font-weight: 700; color: var(--text);
+    background: rgba(79,142,247,0.06);
+    font-family: 'DM Mono', monospace; font-size: 0.82rem;
+  }
+  tfoot td:not(:first-child) { text-align: right; color: var(--accent); }
+
+  /* ── 데이터 입력 패널 ── */
+  .input-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .panel-header h2 { font-size: 0.875rem; font-weight: 700; }
+  .panel-body { padding: 1.5rem; }
+
+  .input-grid { display: grid; gap: 0.75rem; }
+  .input-row {
+    display: grid;
+    grid-template-columns: 200px repeat(6, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .input-label {
+    font-size: 0.75rem; font-weight: 500;
+    color: var(--text); padding: 0.4rem 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .input-field {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.45rem 0.6rem;
+    color: var(--text);
+    font-size: 0.8rem; font-family: 'DM Mono', monospace;
+    text-align: right;
+    width: 100%; outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .input-field:focus { border-color: var(--accent); background: rgba(79,142,247,0.05); }
+  .input-field::placeholder { color: var(--muted); }
+  .input-header-row {
+    display: grid;
+    grid-template-columns: 200px repeat(6, 1fr) auto;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .input-col-label {
+    font-size: 0.67rem; font-weight: 600; color: var(--muted);
+    letter-spacing: 0.05em; text-align: right;
+    padding: 0 0.2rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .input-col-label:first-child { text-align: left; }
+  .del-btn {
+    width: 28px; height: 28px; flex-shrink: 0;
+    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 6px; color: #f87171;
+    cursor: pointer; font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .del-btn:hover { background: rgba(239,68,68,0.25); }
+  .add-row-btn {
+    margin-top: 0.75rem;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: none; border: 1px dashed var(--border);
+    border-radius: 8px; padding: 0.5rem 1rem;
+    color: var(--muted); font-size: 0.78rem; font-weight: 500;
+    cursor: pointer; font-family: 'Pretendard', sans-serif;
+    transition: all 0.15s; width: 100%; justify-content: center;
+  }
+  .add-row-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,0.05); }
+
+  /* ── 애니메이션 ── */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .kpi-card { animation: fadeUp 0.4s ease both; }
+  .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+  .kpi-card:nth-child(2) { animation-delay: 0.1s; }
+  .kpi-card:nth-child(3) { animation-delay: 0.15s; }
+  .kpi-card:nth-child(4) { animation-delay: 0.2s; }
+  .card { animation: fadeUp 0.4s ease both; animation-delay: 0.25s; }
+
+  /* ── 탭 ── */
+  .tab-bar { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; }
+  .tab {
+    padding: 0.5rem 1rem; border-radius: 8px;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--border); transition: all 0.15s;
+    color: var(--muted2); background: var(--surface2);
+  }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  /* ── 반응형 ── */
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .main-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .wrapper { padding: 1rem; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .input-row { grid-template-columns: 140px repeat(4, 1fr) auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- 헤더 -->
+  <div class="header">
+    <div class="header-left">
+      <h1>주간 계약 트랜드</h1>
+      <p>Weekly Contract Trend Dashboard · 자이 분양 현황</p>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-ghost" onclick="showTab('data')">✏️ 데이터 입력</button>
+      <button class="btn btn-primary" onclick="showTab('dashboard')">📊 대시보드</button>
+    </div>
+  </div>
+
+  <!-- 탭 -->
+  <div class="tab-bar">
+    <div class="tab active" onclick="showTab('dashboard')" id="tab-dashboard">📊 대시보드</div>
+    <div class="tab" onclick="showTab('data')" id="tab-data">✏️ 데이터 입력</div>
+  </div>
+
+  <!-- 대시보드 탭 -->
+  <div class="tab-content active" id="content-dashboard">
+
+    <!-- KPI -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- 차트 2열 -->
+    <div class="main-grid">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">주간 계약 추이</div>
+            <div class="card-subtitle">주차별 총 계약 세대수</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">단지별 누적 비중</div>
+            <div class="card-subtitle">전체 계약 대비 단지 비율</div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="doughnutChart"></canvas></div>
+      </div>
+
+      <!-- 막대 차트 (풀폭) -->
+      <div class="card full-width">
+        <div class="card-header">
+          <div>
+            <div class="card-title">단지 × 주간 계약 현황</div>
+            <div class="card-subtitle">주차별 단지 계약 세대수 비교</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="barLegend"></div>
+        </div>
+        <div class="chart-wrap-lg"><canvas id="barChart"></canvas></div>
+      </div>
+
+      <!-- 상세 테이블 (풀폭) -->
+      <div class="card full-width">
+        <div class="card-header">
+          <div>
+            <div class="card-title">단지별 상세 현황</div>
+            <div class="card-subtitle">주차별 계약 세대수 및 비중</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="detailTable">
+            <thead><tr id="tableHead"></tr></thead>
+            <tbody id="tableBody"></tbody>
+            <tfoot><tr id="tableFoot"></tr></tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 데이터 입력 탭 -->
+  <div class="tab-content" id="content-data">
+    <div class="input-panel">
+      <div class="panel-header">
+        <h2>📋 데이터 입력</h2>
+        <button class="btn btn-primary" onclick="applyData()">✅ 적용하고 대시보드 보기</button>
+      </div>
+      <div class="panel-body">
+        <div class="input-header-row" id="inputHeaderRow"></div>
+        <div class="input-grid" id="inputGrid"></div>
+        <button class="add-row-btn" onclick="addRow()">+ 단지 추가</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── 데이터 ──────────────────────────────────────────────────
+let weeks = [
+  "1주(2/27~3/5)",
+  "2주(3/6~3/12)",
+  "3주(3/13~3/19)",
+  "4주(3/20~3/26)",
+  "5주차",
+  "6주차",
+];
+
+let projects = [
+  { name: "북오산자이리버블시티(경기)", values: [298, 137, 106, 53, null, null] },
+  { name: "수지자이에디시온(경기)",     values: [5,   17,  7,   10,  null, null] },
+  { name: "안양자이헤리티온(경기)",     values: [null,null,44,  null,null, null] },
+  { name: "양산자이파크팰리체(경남)",   values: [2,   2,   2,   2,   null, null] },
+  { name: "원주자이센트로(강원)",       values: [3,   4,   null,4,   null, null] },
+  { name: "운암자이포레나퍼스티체",     values: [3,   null,1,   null,null, null] },
+  { name: "도룡자이라피크(대전)",       values: [null,1,   3,   2,   null, null] },
+  { name: "대구역자이더스타(대구)",     values: [1,   null,null,null,null, null] },
+  { name: "범어자이오피스텔(대구)",     values: [null,2,   null,null,null, null] },
+  { name: "음성자이센트럴시티(충북)",   values: [null,1,   null,null,null, null] },
+  { name: "아산자이그랜드파크2단지(충남)", values: [null,null,null,1, null, null] },
+];
+
+// ── 색상 ──────────────────────────────────────────────────
+const PALETTE = [
+  "#4f8ef7","#7c3aed","#10b981","#f59e0b",
+  "#ef4444","#06b6d4","#8b5cf6","#ec4899",
+  "#84cc16","#f97316","#14b8a6","#a855f7"
+];
+
+// ── 차트 인스턴스 ──
+let lineChartInst, doughnutChartInst, barChartInst;
+
+// ── 유틸 ──────────────────────────────────────────────────
+function v(val) { return val || 0; }
+function fmt(n) { return n === 0 ? "-" : n.toLocaleString(); }
+function activeWeeks() {
+  return weeks.filter((_, wi) =>
+    projects.some(p => p.values[wi] != null && p.values[wi] > 0)
+  );
+}
+function weekTotals() {
+  return weeks.map((_, wi) => projects.reduce((s, p) => s + v(p.values[wi]), 0));
+}
+function projectTotal(p) { return p.values.reduce((s, x) => s + v(x), 0); }
+function grandTotal() { return projects.reduce((s, p) => s + projectTotal(p), 0); }
+
+// ── KPI ──────────────────────────────────────────────────
+function renderKPI() {
+  const wTotals = weekTotals();
+  const gt = grandTotal();
+  const activeWks = weeks.filter((_, wi) => wTotals[wi] > 0);
+  const lastIdx = activeWks.length ? weeks.indexOf(activeWks[activeWks.length - 1]) : -1;
+  const prevIdx = lastIdx > 0 ? lastIdx - 1 : -1;
+  const lastVal = lastIdx >= 0 ? wTotals[lastIdx] : 0;
+  const prevVal = prevIdx >= 0 ? wTotals[prevIdx] : 0;
+  const pct = prevVal > 0 ? Math.round((lastVal - prevVal) / prevVal * 100) : null;
+  const topProject = [...projects].sort((a, b) => projectTotal(b) - projectTotal(a))[0];
+
+  const kpis = [
+    {
+      icon: "🏠", color: "#4f8ef7", bg: "rgba(79,142,247,0.12)",
+      label: "총 누적 계약", value: gt.toLocaleString(), unit: "세대",
+      sub: `${projects.length}개 단지`,
+      badge: null,
+    },
+    {
+      icon: "📈", color: "#10b981", bg: "rgba(16,185,129,0.12)",
+      label: "최근 주차 계약", value: lastVal.toLocaleString(), unit: "세대",
+      sub: lastIdx >= 0 ? weeks[lastIdx] : "-",
+      badge: pct != null ? { cls: pct >= 0 ? "badge-up" : "badge-down", text: (pct >= 0 ? "▲" : "▼") + " " + Math.abs(pct) + "%" } : null,
+    },
+    {
+      icon: "🏆", color: "#f59e0b", bg: "rgba(245,158,11,0.12)",
+      label: "최다 계약 단지", value: topProject ? projectTotal(topProject).toLocaleString() : "-", unit: "세대",
+      sub: topProject ? topProject.name.replace(/\(.*\)/, '') : "-",
+      badge: topProject ? { cls: "badge-neutral", text: Math.round(projectTotal(topProject)/gt*100) + "%" } : null,
+    },
+    {
+      icon: "📅", color: "#7c3aed", bg: "rgba(124,58,237,0.12)",
+      label: "집계 주차", value: activeWks.length, unit: "주",
+      sub: activeWks.length > 0 ? `${activeWks[0]} ~ ${activeWks[activeWks.length-1]}` : "-",
+      badge: null,
+    },
+  ];
+
+  document.getElementById("kpiGrid").innerHTML = kpis.map(k => `
+    <div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg};">
+      <div class="kpi-icon" style="background:${k.bg};">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}<span style="font-size:1rem;font-weight:500;color:var(--muted2);margin-left:4px;">${k.unit}</span></div>
+      ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ""}
+      ${k.badge ? `<span class="kpi-badge ${k.badge.cls}">${k.badge.text}</span>` : ""}
+    </div>
+  `).join("");
+}
+
+// ── 꺾은선 차트 ──────────────────────────────────────────
+function renderLine() {
+  const wTotals = weekTotals();
+  const aw = weeks.filter((_, wi) => wTotals[wi] > 0);
+  const aData = aw.map((_, li) => { const wi = weeks.indexOf(aw[li]); return wTotals[wi]; });
+
+  if (lineChartInst) lineChartInst.destroy();
+  lineChartInst = new Chart(document.getElementById("lineChart"), {
+    type: "line",
+    data: {
+      labels: aw,
+      datasets: [{
+        label: "계약 세대수",
+        data: aData,
+        borderColor: "#4f8ef7",
+        backgroundColor: "rgba(79,142,247,0.08)",
+        pointBackgroundColor: "#4f8ef7",
+        pointBorderColor: "#0b0f1a",
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        tension: 0.4,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: "#1a2235", borderColor: "rgba(255,255,255,0.07)",
+        borderWidth: 1, titleColor: "#f1f5f9", bodyColor: "#94a3b8",
+        padding: 10,
+      }},
+      scales: {
+        x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b", font: { size: 11 } } },
+        y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b", font: { size: 11 } }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ── 도넛 차트 ──────────────────────────────────────────
+function renderDoughnut() {
+  const gt = grandTotal();
+  const sorted = [...projects].sort((a, b) => projectTotal(b) - projectTotal(a));
+  const top6 = sorted.slice(0, 6);
+  const others = sorted.slice(6).reduce((s, p) => s + projectTotal(p), 0);
+  const labels = [...top6.map(p => p.name.replace(/\(.*\)/, '')), others > 0 ? "기타" : null].filter(Boolean);
+  const data = [...top6.map(p => projectTotal(p)), others > 0 ? others : null].filter(x => x !== null);
+  const colors = PALETTE.slice(0, labels.length);
+
+  if (doughnutChartInst) doughnutChartInst.destroy();
+  doughnutChartInst = new Chart(document.getElementById("doughnutChart"), {
+    type: "doughnut",
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: "#111827", borderWidth: 3 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: "62%",
+      plugins: {
+        legend: {
+          position: "right",
+          labels: { color: "#94a3b8", font: { size: 11, family: "'Pretendard'" }, padding: 12, boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: "circle" }
+        },
+        tooltip: {
+          backgroundColor: "#1a2235", borderColor: "rgba(255,255,255,0.07)", borderWidth: 1,
+          titleColor: "#f1f5f9", bodyColor: "#94a3b8", padding: 10,
+          callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()}세대 (${Math.round(ctx.raw/gt*100)}%)` }
+        }
+      }
+    }
+  });
+}
+
+// ── 가로 막대 차트 ──────────────────────────────────────
+function renderBar() {
+  const wTotals = weekTotals();
+  const aw = weeks.filter((_, wi) => wTotals[wi] > 0);
+  const awIdx = aw.map(w => weeks.indexOf(w));
+  const wColors = ["#4f8ef7","#7c3aed","#10b981","#f59e0b","#ef4444","#06b6d4"];
+
+  const sorted = [...projects].sort((a, b) => projectTotal(b) - projectTotal(a));
+  const topP = sorted.slice(0, 10);
+
+  const datasets = aw.map((wk, li) => ({
+    label: wk,
+    data: topP.map(p => v(p.values[awIdx[li]])),
+    backgroundColor: wColors[li] || "#64748b",
+    borderRadius: 4,
+    borderSkipped: false,
+    barPercentage: 0.7,
+  }));
+
+  if (barChartInst) barChartInst.destroy();
+  const barH = Math.max(260, topP.length * 36 + 60);
+  document.querySelector(".chart-wrap-lg").style.height = barH + "px";
+  barChartInst = new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: { labels: topP.map(p => p.name.replace(/\(.*\)/, '')), datasets },
+    options: {
+      indexAxis: "y",
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#1a2235", borderColor: "rgba(255,255,255,0.07)", borderWidth: 1,
+          titleColor: "#f1f5f9", bodyColor: "#94a3b8", padding: 10,
+        }
+      },
+      scales: {
+        x: { stacked: false, grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b", font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // 커스텀 범례
+  document.getElementById("barLegend").innerHTML = aw.map((wk, li) =>
+    `<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#94a3b8;">
+      <span class="dot" style="background:${wColors[li]};"></span>${wk}
+    </span>`
+  ).join("");
+}
+
+// ── 테이블 ──────────────────────────────────────────────
+function renderTable() {
+  const wTotals = weekTotals();
+  const aw = weeks.filter((_, wi) => wTotals[wi] > 0);
+  const awIdx = aw.map(w => weeks.indexOf(w));
+  const gt = grandTotal();
+  const sorted = [...projects].sort((a, b) => projectTotal(b) - projectTotal(a));
+
+  document.getElementById("tableHead").innerHTML =
+    `<th>단지명</th>` + aw.map(w => `<th>${w}</th>`).join("") +
+    `<th>합계</th><th class="bar-cell">비중</th>`;
+
+  document.getElementById("tableBody").innerHTML = sorted.map(p => {
+    const tot = projectTotal(p);
+    const pct = gt > 0 ? Math.round(tot / gt * 100) : 0;
+    return `<tr>
+      <td>${p.name}</td>
+      ${awIdx.map(wi => `<td>${fmt(v(p.values[wi]))}</td>`).join("")}
+      <td class="total-col">${fmt(tot)}</td>
+      <td class="bar-cell">
+        <span style="color:var(--muted2);font-size:0.75rem;">${pct}%</span>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;"></div></div>
+      </td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("tableFoot").innerHTML =
+    `<td>합 계</td>` + awIdx.map(wi => `<td>${wTotals[wi].toLocaleString()}</td>`).join("") +
+    `<td>${gt.toLocaleString()}</td><td>100%</td>`;
+}
+
+// ── 전체 렌더 ──────────────────────────────────────────
+function renderAll() {
+  renderKPI();
+  renderLine();
+  renderDoughnut();
+  renderBar();
+  renderTable();
+}
+
+// ── 입력 폼 ──────────────────────────────────────────────
+function renderInputForm() {
+  const colLabels = ["단지명", ...weeks, ""];
+  document.getElementById("inputHeaderRow").innerHTML = colLabels.map((l, i) =>
+    `<div class="input-col-label" ${i === colLabels.length - 1 ? 'style="width:28px"' : ""}>${l}</div>`
+  ).join("");
+
+  document.getElementById("inputGrid").innerHTML = projects.map((p, pi) =>
+    `<div class="input-row" id="row-${pi}">
+      <input class="input-field" style="text-align:left;" placeholder="단지명" value="${p.name}" oninput="projects[${pi}].name=this.value">
+      ${p.values.map((val, wi) =>
+        `<input class="input-field" type="number" min="0" placeholder="-" value="${val != null ? val : ''}"
+          oninput="projects[${pi}].values[${wi}]=this.value===''?null:parseInt(this.value)||0">`
+      ).join("")}
+      <button class="del-btn" onclick="removeRow(${pi})" title="삭제">×</button>
+    </div>`
+  ).join("");
+}
+
+function addRow() {
+  projects.push({ name: "", values: new Array(weeks.length).fill(null) });
+  renderInputForm();
+}
+
+function removeRow(idx) {
+  if (projects.length <= 1) return alert("최소 1개 단지가 필요합니다.");
+  projects.splice(idx, 1);
+  renderInputForm();
+}
+
+function applyData() {
+  renderAll();
+  showTab("dashboard");
+}
+
+// ── 탭 전환 ──────────────────────────────────────────────
+function showTab(id) {
+  ["dashboard", "data"].forEach(t => {
+    document.getElementById("tab-" + t).classList.toggle("active", t === id);
+    document.getElementById("content-" + t).classList.toggle("active", t === id);
+  });
+  if (id === "data") renderInputForm();
+}
+
+// ── 초기 렌더 ──────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
