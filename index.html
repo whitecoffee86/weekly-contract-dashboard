@@ -8,293 +8,122 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #0b0f1a;
-    --surface: #111827;
-    --surface2: #1a2235;
-    --border: rgba(255,255,255,0.07);
-    --accent: #4f8ef7;
-    --accent2: #7c3aed;
-    --accent3: #10b981;
-    --accent4: #f59e0b;
-    --text: #f1f5f9;
-    --muted: #64748b;
-    --muted2: #94a3b8;
+    --bg:#0b0f1a; --surface:#111827; --surface2:#1a2235; --border:rgba(255,255,255,0.07);
+    --accent:#4f8ef7; --accent2:#7c3aed; --text:#f1f5f9; --muted:#64748b; --muted2:#94a3b8;
   }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(79,142,247,0.12) 0%,transparent 60%),
+               radial-gradient(ellipse 60% 40% at 80% 110%,rgba(124,58,237,0.10) 0%,transparent 60%)}
+  .wrapper{position:relative;z-index:1;padding:2rem 2.5rem;max-width:1600px;margin:0 auto}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+  .header-left h1{font-size:1.75rem;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,#fff 0%,#94a3b8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.25rem}
+  .header-left p{font-size:.78rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+  .header-right{display:flex;gap:.75rem}
+  .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:8px;font-size:.8rem;font-weight:600;font-family:'Pretendard',sans-serif;cursor:pointer;border:none;transition:all .18s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:#6a9ef8;transform:translateY(-1px);box-shadow:0 4px 20px rgba(79,142,247,.35)}
+  .btn-ghost{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
+  .btn-ghost:hover{background:var(--surface);color:var(--text)}
 
-  body {
-    font-family: 'Pretendard', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+  .tab-bar{display:flex;gap:.4rem;margin-bottom:1.5rem}
+  .tab{padding:.5rem 1rem;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:all .15s;color:var(--muted2);background:var(--surface2)}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tab-content{display:none}.tab-content.active{display:block}
 
-  /* ── 배경 효과 ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(79,142,247,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(124,58,237,0.10) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
-  }
+  /* KPI */
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.25rem 1.4rem;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;animation:fadeUp .4s ease both}
+  .kpi-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+  .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc)}
+  .kpi-icon{width:34px;height:34px;border-radius:10px;background:var(--kb);display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:.875rem}
+  .kpi-label{font-size:.72rem;color:var(--muted2);font-weight:500;letter-spacing:.04em;margin-bottom:.25rem}
+  .kpi-value{font-size:1.8rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+  .kpi-unit{font-size:.9rem;font-weight:500;color:var(--muted2);margin-left:3px}
+  .kpi-sub{font-size:.7rem;color:var(--muted);margin-top:.4rem}
+  .kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:.4rem}
+  .bd{background:rgba(239,68,68,.15);color:#f87171}.bu{background:rgba(16,185,129,.15);color:#34d399}.bn{background:rgba(100,116,139,.15);color:var(--muted2)}
 
-  .wrapper { position: relative; z-index: 1; padding: 2rem 2.5rem; max-width: 1600px; margin: 0 auto; }
+  /* 분류 배지 */
+  .cb{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px}
+  .cj{background:rgba(239,68,68,.15);color:#ef4444}
+  .ci{background:rgba(79,142,247,.15);color:#4f8ef7}
+  .cg{background:rgba(16,185,129,.15);color:#10b981}
+  .cs{background:rgba(245,158,11,.15);color:#f59e0b}
 
-  /* ── 헤더 ── */
-  .header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .header-left h1 {
-    font-size: 1.75rem;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.25rem;
-  }
-  .header-left p { font-size: 0.8rem; color: var(--muted); font-weight: 400; letter-spacing: 0.05em; text-transform: uppercase; }
-  .header-right { display: flex; gap: 0.75rem; align-items: center; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.55rem 1.1rem;
-    border-radius: 8px;
-    font-size: 0.8rem; font-weight: 600; font-family: 'Pretendard', sans-serif;
-    cursor: pointer; border: none; transition: all 0.18s;
-  }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #6a9ef8; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(79,142,247,0.35); }
-  .btn-ghost { background: var(--surface2); color: var(--muted2); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--surface); color: var(--text); }
+  /* 분류 요약 행 */
+  .cat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+  .cat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem}
+  .cat-val{font-size:1.5rem;font-weight:800;letter-spacing:-.03em}
+  .cat-bar-bg{height:4px;background:rgba(255,255,255,.07);border-radius:99px;margin-top:.5rem}
+  .cat-bar-fill{height:4px;border-radius:99px}
 
-  /* ── KPI 카드 ── */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-  .kpi-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1.4rem 1.5rem;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
-  .kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; height: 3px;
-    background: var(--kpi-color);
-  }
-  .kpi-icon {
-    width: 36px; height: 36px;
-    border-radius: 10px;
-    background: var(--kpi-bg);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem;
-    margin-bottom: 1rem;
-  }
-  .kpi-label { font-size: 0.75rem; color: var(--muted2); font-weight: 500; letter-spacing: 0.04em; margin-bottom: 0.3rem; }
-  .kpi-value { font-size: 2rem; font-weight: 800; letter-spacing: -0.04em; color: var(--text); line-height: 1; }
-  .kpi-sub { font-size: 0.73rem; color: var(--muted); margin-top: 0.5rem; }
-  .kpi-badge {
-    display: inline-flex; align-items: center; gap: 3px;
-    font-size: 0.68rem; font-weight: 600;
-    padding: 2px 7px; border-radius: 20px;
-    margin-top: 0.5rem;
-  }
-  .badge-down { background: rgba(239,68,68,0.15); color: #f87171; }
-  .badge-up { background: rgba(16,185,129,0.15); color: #34d399; }
-  .badge-neutral { background: rgba(100,116,139,0.15); color: var(--muted2); }
+  /* 카드 */
+  .main-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
+  .full-width{grid-column:1/-1}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;animation:fadeUp .4s ease both;animation-delay:.1s}
+  .card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem}
+  .card-title{font-size:.875rem;font-weight:700;letter-spacing:-.01em}
+  .card-subtitle{font-size:.72rem;color:var(--muted);margin-top:2px}
+  .chart-wrap{position:relative;height:220px}
 
-  /* ── 메인 그리드 ── */
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
-  }
-  .full-width { grid-column: 1 / -1; }
+  /* 필터 */
+  .filter-bar{display:flex;gap:.4rem;flex-wrap:wrap}
+  .fb{padding:.3rem .7rem;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted2);font-family:'Pretendard',sans-serif;transition:all .15s}
+  .fb.active{color:#fff;border-color:transparent}
+  .fa.active{background:var(--accent)}
+  .fj.active{background:#ef4444}.fi.active{background:#4f8ef7}.fg.active{background:#10b981}.fs.active{background:#f59e0b}
 
-  /* ── 차트 카드 ── */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1.5rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .card-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 1.25rem;
-  }
-  .card-title { font-size: 0.875rem; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-  .card-subtitle { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-  .chart-wrap { position: relative; height: 220px; }
-  .chart-wrap-lg { position: relative; height: 260px; }
+  /* 테이블 */
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  thead th{text-align:left;padding:.6rem .8rem;font-size:.68rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+  thead th:not(:first-child):not(:nth-child(2)){text-align:right}
+  tbody tr{transition:background .12s}
+  tbody tr:hover{background:rgba(255,255,255,.03)}
+  tbody td{padding:.6rem .8rem;border-bottom:1px solid var(--border);color:var(--muted2);white-space:nowrap}
+  tbody td:first-child{color:var(--text);font-weight:500}
+  tbody td:not(:first-child):not(:nth-child(2)){text-align:right;font-family:'DM Mono',monospace;font-size:.79rem}
+  .tc{color:var(--accent);font-weight:700}
+  .mini-bar{height:4px;background:rgba(255,255,255,.07);border-radius:99px;margin-top:3px;width:60px}
+  .mini-bar-fill{height:4px;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  tfoot td{padding:.7rem .8rem;font-weight:700;color:var(--text);background:rgba(79,142,247,.06);font-family:'DM Mono',monospace;font-size:.82rem}
+  tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accent)}
+  .sec-row td{background:rgba(255,255,255,.02);font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:.4rem .8rem}
 
-  /* ── 테이블 ── */
-  .table-wrap { overflow-x: auto; margin-top: 0.5rem; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-  thead th {
-    text-align: left; padding: 0.6rem 0.875rem;
-    font-size: 0.7rem; font-weight: 600; color: var(--muted);
-    letter-spacing: 0.06em; text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-  thead th:not(:first-child) { text-align: right; }
-  tbody tr { transition: background 0.12s; }
-  tbody tr:hover { background: rgba(255,255,255,0.03); }
-  tbody td {
-    padding: 0.65rem 0.875rem;
-    border-bottom: 1px solid var(--border);
-    color: var(--muted2);
-    white-space: nowrap;
-  }
-  tbody td:first-child { color: var(--text); font-weight: 500; }
-  tbody td:not(:first-child) { text-align: right; font-family: 'DM Mono', monospace; font-size: 0.8rem; }
-  td.total-col { color: var(--accent); font-weight: 700; }
-  .bar-cell { min-width: 80px; }
-  .mini-bar { height: 4px; background: rgba(255,255,255,0.07); border-radius: 99px; margin-top: 4px; }
-  .mini-bar-fill { height: 4px; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
-  tfoot td {
-    padding: 0.75rem 0.875rem;
-    font-weight: 700; color: var(--text);
-    background: rgba(79,142,247,0.06);
-    font-family: 'DM Mono', monospace; font-size: 0.82rem;
-  }
-  tfoot td:not(:first-child) { text-align: right; color: var(--accent); }
+  /* 입력 */
+  .input-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface2)}
+  .panel-header h2{font-size:.875rem;font-weight:700}
+  .panel-body{padding:1.5rem}
+  .input-section{margin-bottom:1.5rem}
+  .ist{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.6rem;padding-left:.5rem;border-left:3px solid}
+  .ist-j{color:#ef4444;border-color:#ef4444}.ist-i{color:#4f8ef7;border-color:#4f8ef7}
+  .ist-g{color:#10b981;border-color:#10b981}.ist-s{color:#f59e0b;border-color:#f59e0b}
+  .ih-row{display:grid;grid-template-columns:180px 90px repeat(6,1fr) auto;gap:.5rem;margin-bottom:.4rem}
+  .ir{display:grid;grid-template-columns:180px 90px repeat(6,1fr) auto;gap:.5rem;align-items:center;margin-bottom:.35rem}
+  .icl{font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:.05em;text-align:right;padding:0 .2rem}
+  .icl:first-child,.icl:nth-child(2){text-align:left}
+  .if_{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.4rem .6rem;color:var(--text);font-size:.78rem;font-family:'DM Mono',monospace;text-align:right;width:100%;outline:none;transition:border-color .15s,background .15s}
+  .if_:focus{border-color:var(--accent);background:rgba(79,142,247,.05)}
+  .if_.nf{text-align:left;font-family:'Pretendard',sans-serif;font-size:.8rem}
+  .db{width:28px;height:28px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:6px;color:#f87171;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .db:hover{background:rgba(239,68,68,.25)}
+  .ab{margin-top:.5rem;display:inline-flex;align-items:center;gap:.4rem;background:none;border:1px dashed var(--border);border-radius:8px;padding:.45rem 1rem;color:var(--muted);font-size:.75rem;font-weight:500;cursor:pointer;font-family:'Pretendard',sans-serif;transition:all .15s;width:100%;justify-content:center}
+  .ab:hover{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.05)}
 
-  /* ── 데이터 입력 패널 ── */
-  .input-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-  .panel-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-  }
-  .panel-header h2 { font-size: 0.875rem; font-weight: 700; }
-  .panel-body { padding: 1.5rem; }
-
-  .input-grid { display: grid; gap: 0.75rem; }
-  .input-row {
-    display: grid;
-    grid-template-columns: 200px repeat(6, 1fr) auto;
-    gap: 0.5rem;
-    align-items: center;
-  }
-  .input-label {
-    font-size: 0.75rem; font-weight: 500;
-    color: var(--text); padding: 0.4rem 0;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .input-field {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.45rem 0.6rem;
-    color: var(--text);
-    font-size: 0.8rem; font-family: 'DM Mono', monospace;
-    text-align: right;
-    width: 100%; outline: none;
-    transition: border-color 0.15s, background 0.15s;
-  }
-  .input-field:focus { border-color: var(--accent); background: rgba(79,142,247,0.05); }
-  .input-field::placeholder { color: var(--muted); }
-  .input-header-row {
-    display: grid;
-    grid-template-columns: 200px repeat(6, 1fr) auto;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-  .input-col-label {
-    font-size: 0.67rem; font-weight: 600; color: var(--muted);
-    letter-spacing: 0.05em; text-align: right;
-    padding: 0 0.2rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .input-col-label:first-child { text-align: left; }
-  .del-btn {
-    width: 28px; height: 28px; flex-shrink: 0;
-    background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
-    border-radius: 6px; color: #f87171;
-    cursor: pointer; font-size: 0.85rem;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .del-btn:hover { background: rgba(239,68,68,0.25); }
-  .add-row-btn {
-    margin-top: 0.75rem;
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    background: none; border: 1px dashed var(--border);
-    border-radius: 8px; padding: 0.5rem 1rem;
-    color: var(--muted); font-size: 0.78rem; font-weight: 500;
-    cursor: pointer; font-family: 'Pretendard', sans-serif;
-    transition: all 0.15s; width: 100%; justify-content: center;
-  }
-  .add-row-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,0.05); }
-
-  /* ── 애니메이션 ── */
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-  .kpi-card { animation: fadeUp 0.4s ease both; }
-  .kpi-card:nth-child(1) { animation-delay: 0.05s; }
-  .kpi-card:nth-child(2) { animation-delay: 0.1s; }
-  .kpi-card:nth-child(3) { animation-delay: 0.15s; }
-  .kpi-card:nth-child(4) { animation-delay: 0.2s; }
-  .card { animation: fadeUp 0.4s ease both; animation-delay: 0.25s; }
-
-  /* ── 탭 ── */
-  .tab-bar { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; }
-  .tab {
-    padding: 0.5rem 1rem; border-radius: 8px;
-    font-size: 0.8rem; font-weight: 600; cursor: pointer;
-    border: 1px solid var(--border); transition: all 0.15s;
-    color: var(--muted2); background: var(--surface2);
-  }
-  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
-
-  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-
-  /* ── 반응형 ── */
-  @media (max-width: 1100px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .main-grid { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 720px) {
-    .wrapper { padding: 1rem; }
-    .kpi-grid { grid-template-columns: 1fr 1fr; }
-    .input-row { grid-template-columns: 140px repeat(4, 1fr) auto; }
-  }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  .kpi-card:nth-child(1){animation-delay:.05s}.kpi-card:nth-child(2){animation-delay:.1s}
+  .kpi-card:nth-child(3){animation-delay:.15s}.kpi-card:nth-child(4){animation-delay:.2s}.kpi-card:nth-child(5){animation-delay:.25s}
+  select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.main-grid{grid-template-columns:1fr}.cat-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:720px){.wrapper{padding:1rem}.kpi-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <div class="wrapper">
-
-  <!-- 헤더 -->
   <div class="header">
     <div class="header-left">
       <h1>주간 계약 트랜드</h1>
@@ -306,393 +135,318 @@
     </div>
   </div>
 
-  <!-- 탭 -->
   <div class="tab-bar">
     <div class="tab active" onclick="showTab('dashboard')" id="tab-dashboard">📊 대시보드</div>
     <div class="tab" onclick="showTab('data')" id="tab-data">✏️ 데이터 입력</div>
   </div>
 
-  <!-- 대시보드 탭 -->
+  <!-- 대시보드 -->
   <div class="tab-content active" id="content-dashboard">
-
-    <!-- KPI -->
     <div class="kpi-grid" id="kpiGrid"></div>
-
-    <!-- 차트 2열 -->
+    <div class="cat-row" id="catRow"></div>
     <div class="main-grid">
-      <div class="card">
+
+      <!-- 주간 추이 -->
+      <div class="card full-width">
         <div class="card-header">
-          <div>
-            <div class="card-title">주간 계약 추이</div>
-            <div class="card-subtitle">주차별 총 계약 세대수</div>
+          <div><div class="card-title">주간 계약 추이</div><div class="card-subtitle">분류별 주차 계약 세대수</div></div>
+          <div class="filter-bar">
+            <button class="fb fa active" onclick="setF('line','all',this)">전체</button>
+            <button class="fb fj" onclick="setF('line','집중관리',this)">집중관리</button>
+            <button class="fb fi" onclick="setF('line','일반',this)">일반</button>
+            <button class="fb fg" onclick="setF('line','공사비확보',this)">공사비확보</button>
+            <button class="fb fs" onclick="setF('line','신규',this)">신규</button>
           </div>
         </div>
-        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+        <div class="chart-wrap" style="height:240px"><canvas id="lineChart"></canvas></div>
       </div>
+
+      <!-- 분류별 멀티라인 -->
       <div class="card">
         <div class="card-header">
-          <div>
-            <div class="card-title">단지별 누적 비중</div>
-            <div class="card-subtitle">전체 계약 대비 단지 비율</div>
-          </div>
+          <div><div class="card-title">분류별 주간 추이</div><div class="card-subtitle">카테고리별 주차 계약 세대수</div></div>
+        </div>
+        <div class="chart-wrap"><canvas id="catLineChart"></canvas></div>
+      </div>
+
+      <!-- 도넛 -->
+      <div class="card">
+        <div class="card-header">
+          <div><div class="card-title">분류별 누적 비중</div><div class="card-subtitle">전체 계약 대비 카테고리 비율</div></div>
         </div>
         <div class="chart-wrap"><canvas id="doughnutChart"></canvas></div>
       </div>
 
-      <!-- 막대 차트 (풀폭) -->
+      <!-- 단지별 막대 -->
       <div class="card full-width">
         <div class="card-header">
-          <div>
-            <div class="card-title">단지 × 주간 계약 현황</div>
-            <div class="card-subtitle">주차별 단지 계약 세대수 비교</div>
+          <div><div class="card-title">단지별 주간 계약 현황</div><div class="card-subtitle">주차별 누적 비교 · 분류별 색상 구분</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end" id="barLegend"></div>
+            <div class="filter-bar">
+            <button class="fb fa active" onclick="setF('bar','all',this)">전체</button>
+            <button class="fb fj" onclick="setF('bar','집중관리',this)">집중관리</button>
+            <button class="fb fi" onclick="setF('bar','일반',this)">일반</button>
+            <button class="fb fg" onclick="setF('bar','공사비확보',this)">공사비확보</button>
+            <button class="fb fs" onclick="setF('bar','신규',this)">신규</button>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="barLegend"></div>
+          </div>
         </div>
-        <div class="chart-wrap-lg"><canvas id="barChart"></canvas></div>
+        <div id="barWrap" style="position:relative"><canvas id="barChart"></canvas></div>
       </div>
 
-      <!-- 상세 테이블 (풀폭) -->
+      <!-- 테이블 -->
       <div class="card full-width">
         <div class="card-header">
-          <div>
-            <div class="card-title">단지별 상세 현황</div>
-            <div class="card-subtitle">주차별 계약 세대수 및 비중</div>
+          <div><div class="card-title">단지별 상세 현황</div><div class="card-subtitle">분류 포함 주차별 계약 세대수</div></div>
+          <div class="filter-bar">
+            <button class="fb fa active" onclick="setF('table','all',this)">전체</button>
+            <button class="fb fj" onclick="setF('table','집중관리',this)">집중관리</button>
+            <button class="fb fi" onclick="setF('table','일반',this)">일반</button>
+            <button class="fb fg" onclick="setF('table','공사비확보',this)">공사비확보</button>
+            <button class="fb fs" onclick="setF('table','신규',this)">신규</button>
           </div>
         </div>
         <div class="table-wrap">
-          <table id="detailTable">
-            <thead><tr id="tableHead"></tr></thead>
-            <tbody id="tableBody"></tbody>
-            <tfoot><tr id="tableFoot"></tr></tfoot>
-          </table>
+          <table><thead><tr id="tHead"></tr></thead><tbody id="tBody"></tbody><tfoot><tr id="tFoot"></tr></tfoot></table>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 데이터 입력 탭 -->
+  <!-- 데이터 입력 -->
   <div class="tab-content" id="content-data">
     <div class="input-panel">
       <div class="panel-header">
         <h2>📋 데이터 입력</h2>
         <button class="btn btn-primary" onclick="applyData()">✅ 적용하고 대시보드 보기</button>
       </div>
-      <div class="panel-body">
-        <div class="input-header-row" id="inputHeaderRow"></div>
-        <div class="input-grid" id="inputGrid"></div>
-        <button class="add-row-btn" onclick="addRow()">+ 단지 추가</button>
-      </div>
+      <div class="panel-body" id="inputBody"></div>
     </div>
   </div>
-
 </div>
 
 <script>
-// ── 데이터 ──────────────────────────────────────────────────
-let weeks = [
-  "1주(2/27~3/5)",
-  "2주(3/6~3/12)",
-  "3주(3/13~3/19)",
-  "4주(3/20~3/26)",
-  "5주차",
-  "6주차",
+const CATS=['집중관리','일반','공사비확보','신규'];
+const CM={
+  '집중관리':{color:'#ef4444',bg:'rgba(239,68,68,0.12)',cls:'cj',ist:'ist-j',icon:'🔴'},
+  '일반':    {color:'#4f8ef7',bg:'rgba(79,142,247,0.12)',cls:'ci',ist:'ist-i',icon:'🔵'},
+  '공사비확보':{color:'#10b981',bg:'rgba(16,185,129,0.12)',cls:'cg',ist:'ist-g',icon:'🟢'},
+  '신규':    {color:'#f59e0b',bg:'rgba(245,158,11,0.12)',cls:'cs',ist:'ist-s',icon:'🟡'},
+};
+let weeks=['1주(2/27~3/5)','2주(3/6~3/12)','3주(3/13~3/19)','4주(3/20~3/26)','5주차','6주차'];
+let projects=[
+  {cat:'집중관리',name:'음성자이센트럴시티(충북)',   values:[null,1,null,null,null,null]},
+  {cat:'집중관리',name:'아산자이그랜드파크2단지(충남)',values:[null,null,null,1,null,null]},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',      values:[null,2,null,null,null,null]},
+  {cat:'집중관리',name:'원주자이센트로(강원)',        values:[3,4,null,4,null,null]},
+  {cat:'일반',name:'별내자이더스타이그제큐티브',      values:[null,null,null,null,null,null]},
+  {cat:'일반',name:'은평자이더스타',                  values:[null,null,null,null,null,null]},
+  {cat:'일반',name:'운암자이포레나퍼스티체',          values:[3,null,1,null,null,null]},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',        values:[2,2,2,2,null,null]},
+  {cat:'일반',name:'도룡자이라피크(대전)',            values:[null,1,3,2,null,null]},
+  {cat:'일반',name:'안양자이헤리티온(경기)',          values:[null,null,44,null,null,null]},
+  {cat:'일반',name:'수지자이에디시온(경기)',          values:[5,17,7,10,null,null]},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',      values:[298,137,106,53,null,null]},
+  {cat:'공사비확보',name:'대구역자이더스타(대구)',    values:[1,null,null,null,null,null]},
+  {cat:'공사비확보',name:'여주역자이헤리티지',        values:[null,null,null,null,null,null]},
+  {cat:'공사비확보',name:'순천그랜드파크자이',        values:[null,null,null,null,null,null]},
+  {cat:'공사비확보',name:'성성자이레이크파크',        values:[null,null,null,null,null,null]},
+  {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',values:[null,null,null,null,null,null]},
+  {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',values:[null,null,null,null,null,null]},
+  {cat:'신규',name:'구리역 하이니티 리버파크',       values:[null,null,null,null,null,null]},
 ];
 
-let projects = [
-  { name: "북오산자이리버블시티(경기)", values: [298, 137, 106, 53, null, null] },
-  { name: "수지자이에디시온(경기)",     values: [5,   17,  7,   10,  null, null] },
-  { name: "안양자이헤리티온(경기)",     values: [null,null,44,  null,null, null] },
-  { name: "양산자이파크팰리체(경남)",   values: [2,   2,   2,   2,   null, null] },
-  { name: "원주자이센트로(강원)",       values: [3,   4,   null,4,   null, null] },
-  { name: "운암자이포레나퍼스티체",     values: [3,   null,1,   null,null, null] },
-  { name: "도룡자이라피크(대전)",       values: [null,1,   3,   2,   null, null] },
-  { name: "대구역자이더스타(대구)",     values: [1,   null,null,null,null, null] },
-  { name: "범어자이오피스텔(대구)",     values: [null,2,   null,null,null, null] },
-  { name: "음성자이센트럴시티(충북)",   values: [null,1,   null,null,null, null] },
-  { name: "아산자이그랜드파크2단지(충남)", values: [null,null,null,1, null, null] },
-];
+const v=x=>x||0;
+const fmt=n=>n===0?'-':n.toLocaleString();
+const ptot=p=>p.values.reduce((s,x)=>s+v(x),0);
+const gtot=()=>projects.reduce((s,p)=>s+ptot(p),0);
+const wtots=()=>weeks.map((_,wi)=>projects.reduce((s,p)=>s+v(p.values[wi]),0));
+const ctot=cat=>projects.filter(p=>p.cat===cat).reduce((s,p)=>s+ptot(p),0);
+const cwtots=cat=>weeks.map((_,wi)=>projects.filter(p=>p.cat===cat).reduce((s,p)=>s+v(p.values[wi]),0));
+const awi=()=>{const wt=wtots();return weeks.map((_,i)=>i).filter(i=>wt[i]>0)};
 
-// ── 색상 ──────────────────────────────────────────────────
-const PALETTE = [
-  "#4f8ef7","#7c3aed","#10b981","#f59e0b",
-  "#ef4444","#06b6d4","#8b5cf6","#ec4899",
-  "#84cc16","#f97316","#14b8a6","#a855f7"
-];
+let fLine='all',fBar='all',fTable='all';
+let lCI,clCI,dI,bI;
 
-// ── 차트 인스턴스 ──
-let lineChartInst, doughnutChartInst, barChartInst;
+const TT={backgroundColor:'#1a2235',borderColor:'rgba(255,255,255,0.07)',borderWidth:1,titleColor:'#f1f5f9',bodyColor:'#94a3b8',padding:10};
+const SC={x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{size:11}},beginAtZero:true}};
 
-// ── 유틸 ──────────────────────────────────────────────────
-function v(val) { return val || 0; }
-function fmt(n) { return n === 0 ? "-" : n.toLocaleString(); }
-function activeWeeks() {
-  return weeks.filter((_, wi) =>
-    projects.some(p => p.values[wi] != null && p.values[wi] > 0)
-  );
-}
-function weekTotals() {
-  return weeks.map((_, wi) => projects.reduce((s, p) => s + v(p.values[wi]), 0));
-}
-function projectTotal(p) { return p.values.reduce((s, x) => s + v(x), 0); }
-function grandTotal() { return projects.reduce((s, p) => s + projectTotal(p), 0); }
-
-// ── KPI ──────────────────────────────────────────────────
-function renderKPI() {
-  const wTotals = weekTotals();
-  const gt = grandTotal();
-  const activeWks = weeks.filter((_, wi) => wTotals[wi] > 0);
-  const lastIdx = activeWks.length ? weeks.indexOf(activeWks[activeWks.length - 1]) : -1;
-  const prevIdx = lastIdx > 0 ? lastIdx - 1 : -1;
-  const lastVal = lastIdx >= 0 ? wTotals[lastIdx] : 0;
-  const prevVal = prevIdx >= 0 ? wTotals[prevIdx] : 0;
-  const pct = prevVal > 0 ? Math.round((lastVal - prevVal) / prevVal * 100) : null;
-  const topProject = [...projects].sort((a, b) => projectTotal(b) - projectTotal(a))[0];
-
-  const kpis = [
-    {
-      icon: "🏠", color: "#4f8ef7", bg: "rgba(79,142,247,0.12)",
-      label: "총 누적 계약", value: gt.toLocaleString(), unit: "세대",
-      sub: `${projects.length}개 단지`,
-      badge: null,
-    },
-    {
-      icon: "📈", color: "#10b981", bg: "rgba(16,185,129,0.12)",
-      label: "최근 주차 계약", value: lastVal.toLocaleString(), unit: "세대",
-      sub: lastIdx >= 0 ? weeks[lastIdx] : "-",
-      badge: pct != null ? { cls: pct >= 0 ? "badge-up" : "badge-down", text: (pct >= 0 ? "▲" : "▼") + " " + Math.abs(pct) + "%" } : null,
-    },
-    {
-      icon: "🏆", color: "#f59e0b", bg: "rgba(245,158,11,0.12)",
-      label: "최다 계약 단지", value: topProject ? projectTotal(topProject).toLocaleString() : "-", unit: "세대",
-      sub: topProject ? topProject.name.replace(/\(.*\)/, '') : "-",
-      badge: topProject ? { cls: "badge-neutral", text: Math.round(projectTotal(topProject)/gt*100) + "%" } : null,
-    },
-    {
-      icon: "📅", color: "#7c3aed", bg: "rgba(124,58,237,0.12)",
-      label: "집계 주차", value: activeWks.length, unit: "주",
-      sub: activeWks.length > 0 ? `${activeWks[0]} ~ ${activeWks[activeWks.length-1]}` : "-",
-      badge: null,
-    },
+function renderKPI(){
+  const wt=wtots(),gt=gtot(),ai=awi();
+  const li=ai.length?ai[ai.length-1]:-1,pi=ai.length>1?ai[ai.length-2]:-1;
+  const lv=li>=0?wt[li]:0,pv=pi>=0?wt[pi]:0;
+  const pct=pv>0?Math.round((lv-pv)/pv*100):null;
+  const top=[...projects].sort((a,b)=>ptot(b)-ptot(a))[0];
+  const kpis=[
+    {icon:'🏠',c:'#4f8ef7',b:'rgba(79,142,247,0.12)',label:'총 누적 계약',val:gt.toLocaleString(),unit:'세대',sub:`${projects.length}개 단지`,badge:null},
+    {icon:'📈',c:'#10b981',b:'rgba(16,185,129,0.12)',label:'최근 주차 계약',val:lv.toLocaleString(),unit:'세대',sub:li>=0?weeks[li]:'-',badge:pct!=null?{cls:pct>=0?'bu':'bd',t:(pct>=0?'▲':'▼')+Math.abs(pct)+'%'}:null},
+    {icon:'🏆',c:'#f59e0b',b:'rgba(245,158,11,0.12)',label:'최다 계약 단지',val:top?ptot(top).toLocaleString():'-',unit:'세대',sub:top?top.name.replace(/\(.*\)/,''):'-',badge:top&&gt>0?{cls:'bn',t:Math.round(ptot(top)/gt*100)+'%'}:null},
+    {icon:'📅',c:'#7c3aed',b:'rgba(124,58,237,0.12)',label:'집계 주차',val:ai.length,unit:'주',sub:ai.length?`${weeks[ai[0]]} ~ ${weeks[ai[ai.length-1]]}`:'-',badge:null},
+    {icon:'📋',c:'#06b6d4',b:'rgba(6,182,212,0.12)',label:'활성 단지',val:projects.filter(p=>ptot(p)>0).length,unit:'개',sub:`전체 ${projects.length}개 중`,badge:null},
   ];
-
-  document.getElementById("kpiGrid").innerHTML = kpis.map(k => `
-    <div class="kpi-card" style="--kpi-color:${k.color};--kpi-bg:${k.bg};">
-      <div class="kpi-icon" style="background:${k.bg};">${k.icon}</div>
+  document.getElementById('kpiGrid').innerHTML=kpis.map((k,i)=>`
+    <div class="kpi-card" style="--kc:${k.c};--kb:${k.b};animation-delay:${i*.05+.05}s">
+      <div class="kpi-icon" style="background:${k.b}">${k.icon}</div>
       <div class="kpi-label">${k.label}</div>
-      <div class="kpi-value">${k.value}<span style="font-size:1rem;font-weight:500;color:var(--muted2);margin-left:4px;">${k.unit}</span></div>
-      ${k.sub ? `<div class="kpi-sub">${k.sub}</div>` : ""}
-      ${k.badge ? `<span class="kpi-badge ${k.badge.cls}">${k.badge.text}</span>` : ""}
-    </div>
-  `).join("");
+      <div class="kpi-value">${k.val}<span class="kpi-unit">${k.unit}</span></div>
+      ${k.sub?`<div class="kpi-sub">${k.sub}</div>`:''}
+      ${k.badge?`<span class="kpi-badge ${k.badge.cls}">${k.badge.t}</span>`:''}
+    </div>`).join('');
 }
 
-// ── 꺾은선 차트 ──────────────────────────────────────────
-function renderLine() {
-  const wTotals = weekTotals();
-  const aw = weeks.filter((_, wi) => wTotals[wi] > 0);
-  const aData = aw.map((_, li) => { const wi = weeks.indexOf(aw[li]); return wTotals[wi]; });
+function renderCatRow(){
+  const gt=gtot();
+  document.getElementById('catRow').innerHTML=CATS.map(cat=>{
+    const m=CM[cat],tot=ctot(cat),pct=gt>0?Math.round(tot/gt*100):0;
+    return `<div class="cat-card">
+      <div style="flex:0 0 auto"><span class="cb ${m.cls}">${m.icon} ${cat}</span></div>
+      <div style="flex:1;min-width:0">
+        <div class="cat-val" style="color:${m.color}">${tot.toLocaleString()}<span style="font-size:.85rem;font-weight:500;color:var(--muted2);margin-left:3px">세대</span></div>
+        <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${pct}%;background:${m.color}"></div></div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:3px">${pct}% of total</div>
+      </div></div>`;
+  }).join('');
+}
 
-  if (lineChartInst) lineChartInst.destroy();
-  lineChartInst = new Chart(document.getElementById("lineChart"), {
-    type: "line",
-    data: {
-      labels: aw,
-      datasets: [{
-        label: "계약 세대수",
-        data: aData,
-        borderColor: "#4f8ef7",
-        backgroundColor: "rgba(79,142,247,0.08)",
-        pointBackgroundColor: "#4f8ef7",
-        pointBorderColor: "#0b0f1a",
-        pointBorderWidth: 2,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        tension: 0.4,
-        fill: true,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: {
-        backgroundColor: "#1a2235", borderColor: "rgba(255,255,255,0.07)",
-        borderWidth: 1, titleColor: "#f1f5f9", bodyColor: "#94a3b8",
-        padding: 10,
-      }},
-      scales: {
-        x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b", font: { size: 11 } } },
-        y: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b", font: { size: 11 } }, beginAtZero: true }
-      }
-    }
+function renderLine(){
+  const ai=awi(),al=ai.map(i=>weeks[i]),wt=wtots();
+  let datasets;
+  if(fLine==='all'){
+    datasets=[{label:'전체',data:ai.map(i=>wt[i]),borderColor:'#4f8ef7',backgroundColor:'rgba(79,142,247,0.08)',pointBackgroundColor:'#4f8ef7',pointBorderColor:'#0b0f1a',pointBorderWidth:2,pointRadius:6,pointHoverRadius:8,tension:.4,fill:true}];
+  } else {
+    const m=CM[fLine],cw=cwtots(fLine);
+    datasets=[{label:fLine,data:ai.map(i=>cw[i]),borderColor:m.color,backgroundColor:m.bg,pointBackgroundColor:m.color,pointBorderColor:'#0b0f1a',pointBorderWidth:2,pointRadius:6,pointHoverRadius:8,tension:.4,fill:true}];
+  }
+  if(lCI) lCI.destroy();
+  lCI=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:al,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT},scales:SC}});
+}
+
+function renderCatLine(){
+  const ai=awi(),al=ai.map(i=>weeks[i]);
+  const datasets=CATS.map(cat=>{
+    const m=CM[cat],cw=cwtots(cat);
+    return {label:cat,data:ai.map(i=>cw[i]),borderColor:m.color,backgroundColor:m.bg,pointBackgroundColor:m.color,pointBorderColor:'#0b0f1a',pointBorderWidth:2,pointRadius:5,pointHoverRadius:7,tension:.4,fill:false};
   });
+  if(clCI) clCI.destroy();
+  clCI=new Chart(document.getElementById('catLineChart'),{type:'line',data:{labels:al,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},tooltip:TT},scales:SC}});
 }
 
-// ── 도넛 차트 ──────────────────────────────────────────
-function renderDoughnut() {
-  const gt = grandTotal();
-  const sorted = [...projects].sort((a, b) => projectTotal(b) - projectTotal(a));
-  const top6 = sorted.slice(0, 6);
-  const others = sorted.slice(6).reduce((s, p) => s + projectTotal(p), 0);
-  const labels = [...top6.map(p => p.name.replace(/\(.*\)/, '')), others > 0 ? "기타" : null].filter(Boolean);
-  const data = [...top6.map(p => projectTotal(p)), others > 0 ? others : null].filter(x => x !== null);
-  const colors = PALETTE.slice(0, labels.length);
+function renderDoughnut(){
+  const gt=gtot(),data=CATS.map(c=>ctot(c)),colors=CATS.map(c=>CM[c].color);
+  if(dI) dI.destroy();
+  dI=new Chart(document.getElementById('doughnutChart'),{type:'doughnut',data:{labels:CATS,datasets:[{data,backgroundColor:colors,borderColor:'#111827',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11,family:"'Pretendard'"},padding:14,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toLocaleString()}세대 (${gt>0?Math.round(ctx.raw/gt*100):0}%)`}}}}});
+}
 
-  if (doughnutChartInst) doughnutChartInst.destroy();
-  doughnutChartInst = new Chart(document.getElementById("doughnutChart"), {
-    type: "doughnut",
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderColor: "#111827", borderWidth: 3 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: "62%",
-      plugins: {
-        legend: {
-          position: "right",
-          labels: { color: "#94a3b8", font: { size: 11, family: "'Pretendard'" }, padding: 12, boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: "circle" }
-        },
-        tooltip: {
-          backgroundColor: "#1a2235", borderColor: "rgba(255,255,255,0.07)", borderWidth: 1,
-          titleColor: "#f1f5f9", bodyColor: "#94a3b8", padding: 10,
-          callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()}세대 (${Math.round(ctx.raw/gt*100)}%)` }
-        }
-      }
-    }
+function renderBar(){
+  const filtered=fBar==='all'?projects:projects.filter(p=>p.cat===fBar);
+  // 분류 순서 유지, 분류 내에서 누적 합계 내림차순
+  const sorted=[...filtered].sort((a,b)=>{
+    const ci=CATS.indexOf(a.cat)-CATS.indexOf(b.cat);
+    return ci!==0?ci:ptot(b)-ptot(a);
   });
-}
-
-// ── 가로 막대 차트 ──────────────────────────────────────
-function renderBar() {
-  const wTotals = weekTotals();
-  const aw = weeks.filter((_, wi) => wTotals[wi] > 0);
-  const awIdx = aw.map(w => weeks.indexOf(w));
-  const wColors = ["#4f8ef7","#7c3aed","#10b981","#f59e0b","#ef4444","#06b6d4"];
-
-  const sorted = [...projects].sort((a, b) => projectTotal(b) - projectTotal(a));
-  const topP = sorted.slice(0, 10);
-
-  const datasets = aw.map((wk, li) => ({
-    label: wk,
-    data: topP.map(p => v(p.values[awIdx[li]])),
-    backgroundColor: wColors[li] || "#64748b",
-    borderRadius: 4,
-    borderSkipped: false,
-    barPercentage: 0.7,
+  const labels=sorted.map(p=>p.name.replace(/\(.*\)/,''));
+  const ai=awi();
+  const wColors=['#4f8ef7','#7c3aed','#10b981','#f59e0b','#ef4444','#06b6d4'];
+  // 주차별 dataset (활성 주차만)
+  const datasets=ai.map((wi,li)=>({
+    label:weeks[wi],
+    data:sorted.map(p=>v(p.values[wi])),
+    backgroundColor:wColors[li]||'#64748b',
+    borderRadius:li===ai.length-1?4:0,
+    borderSkipped:false,
+    barPercentage:.7,
+    stack:'s',
   }));
-
-  if (barChartInst) barChartInst.destroy();
-  const barH = Math.max(260, topP.length * 36 + 60);
-  document.querySelector(".chart-wrap-lg").style.height = barH + "px";
-  barChartInst = new Chart(document.getElementById("barChart"), {
-    type: "bar",
-    data: { labels: topP.map(p => p.name.replace(/\(.*\)/, '')), datasets },
-    options: {
-      indexAxis: "y",
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: "#1a2235", borderColor: "rgba(255,255,255,0.07)", borderWidth: 1,
-          titleColor: "#f1f5f9", bodyColor: "#94a3b8", padding: 10,
-        }
-      },
-      scales: {
-        x: { stacked: false, grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b", font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { color: "#94a3b8", font: { size: 11 } } }
+  const bH=Math.max(300,sorted.length*38+80);
+  document.getElementById('barWrap').style.height=bH+'px';
+  if(bI) bI.destroy();
+  // 범례 HTML
+  const legendHtml=ai.map((wi,li)=>
+    `<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8">
+      <span style="width:8px;height:8px;border-radius:2px;background:${wColors[li]};display:inline-block"></span>${weeks[wi]}
+    </span>`).join('');
+  document.getElementById('barLegend').innerHTML=legendHtml;
+  bI=new Chart(document.getElementById('barChart'),{type:'bar',
+    data:{labels,datasets},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{
+        title:items=>{const p=sorted[items[0].dataIndex];return `${p.name} [${p.cat}]`},
+        label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`
+      }}},
+      scales:{
+        x:{stacked:true,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{size:11}}},
+        y:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:11},autoSkip:false}}
       }
     }
   });
-
-  // 커스텀 범례
-  document.getElementById("barLegend").innerHTML = aw.map((wk, li) =>
-    `<span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#94a3b8;">
-      <span class="dot" style="background:${wColors[li]};"></span>${wk}
-    </span>`
-  ).join("");
 }
 
-// ── 테이블 ──────────────────────────────────────────────
-function renderTable() {
-  const wTotals = weekTotals();
-  const aw = weeks.filter((_, wi) => wTotals[wi] > 0);
-  const awIdx = aw.map(w => weeks.indexOf(w));
-  const gt = grandTotal();
-  const sorted = [...projects].sort((a, b) => projectTotal(b) - projectTotal(a));
-
-  document.getElementById("tableHead").innerHTML =
-    `<th>단지명</th>` + aw.map(w => `<th>${w}</th>`).join("") +
-    `<th>합계</th><th class="bar-cell">비중</th>`;
-
-  document.getElementById("tableBody").innerHTML = sorted.map(p => {
-    const tot = projectTotal(p);
-    const pct = gt > 0 ? Math.round(tot / gt * 100) : 0;
-    return `<tr>
-      <td>${p.name}</td>
-      ${awIdx.map(wi => `<td>${fmt(v(p.values[wi]))}</td>`).join("")}
-      <td class="total-col">${fmt(tot)}</td>
-      <td class="bar-cell">
-        <span style="color:var(--muted2);font-size:0.75rem;">${pct}%</span>
-        <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;"></div></div>
-      </td>
-    </tr>`;
-  }).join("");
-
-  document.getElementById("tableFoot").innerHTML =
-    `<td>합 계</td>` + awIdx.map(wi => `<td>${wTotals[wi].toLocaleString()}</td>`).join("") +
-    `<td>${gt.toLocaleString()}</td><td>100%</td>`;
-}
-
-// ── 전체 렌더 ──────────────────────────────────────────
-function renderAll() {
-  renderKPI();
-  renderLine();
-  renderDoughnut();
-  renderBar();
-  renderTable();
-}
-
-// ── 입력 폼 ──────────────────────────────────────────────
-function renderInputForm() {
-  const colLabels = ["단지명", ...weeks, ""];
-  document.getElementById("inputHeaderRow").innerHTML = colLabels.map((l, i) =>
-    `<div class="input-col-label" ${i === colLabels.length - 1 ? 'style="width:28px"' : ""}>${l}</div>`
-  ).join("");
-
-  document.getElementById("inputGrid").innerHTML = projects.map((p, pi) =>
-    `<div class="input-row" id="row-${pi}">
-      <input class="input-field" style="text-align:left;" placeholder="단지명" value="${p.name}" oninput="projects[${pi}].name=this.value">
-      ${p.values.map((val, wi) =>
-        `<input class="input-field" type="number" min="0" placeholder="-" value="${val != null ? val : ''}"
-          oninput="projects[${pi}].values[${wi}]=this.value===''?null:parseInt(this.value)||0">`
-      ).join("")}
-      <button class="del-btn" onclick="removeRow(${pi})" title="삭제">×</button>
-    </div>`
-  ).join("");
-}
-
-function addRow() {
-  projects.push({ name: "", values: new Array(weeks.length).fill(null) });
-  renderInputForm();
-}
-
-function removeRow(idx) {
-  if (projects.length <= 1) return alert("최소 1개 단지가 필요합니다.");
-  projects.splice(idx, 1);
-  renderInputForm();
-}
-
-function applyData() {
-  renderAll();
-  showTab("dashboard");
-}
-
-// ── 탭 전환 ──────────────────────────────────────────────
-function showTab(id) {
-  ["dashboard", "data"].forEach(t => {
-    document.getElementById("tab-" + t).classList.toggle("active", t === id);
-    document.getElementById("content-" + t).classList.toggle("active", t === id);
+function renderTable(){
+  const ai=awi(),al=ai.map(i=>weeks[i]),wt=wtots(),gt=gtot();
+  const filtered=fTable==='all'?projects:projects.filter(p=>p.cat===fTable);
+  document.getElementById('tHead').innerHTML=`<th>단지명</th><th>분류</th>`+al.map(w=>`<th>${w}</th>`).join('')+`<th>합계</th><th>비중</th>`;
+  let rows='';
+  const cats=fTable==='all'?CATS:[fTable];
+  cats.forEach(cat=>{
+    const ps=filtered.filter(p=>p.cat===cat);
+    if(!ps.length) return;
+    const m=CM[cat],ctotv=ps.reduce((s,p)=>s+ptot(p),0);
+    if(fTable==='all') rows+=`<tr class="sec-row"><td colspan="${3+al.length}"><span class="cb ${m.cls}">${m.icon} ${cat}</span><span style="margin-left:8px;font-family:'DM Mono',monospace">${ctotv.toLocaleString()}세대</span></td></tr>`;
+    ps.sort((a,b)=>ptot(b)-ptot(a)).forEach(p=>{
+      const tot=ptot(p),pct=gt>0?Math.round(tot/gt*100):0;
+      rows+=`<tr><td>${p.name}</td><td><span class="cb ${m.cls}">${cat}</span></td>${ai.map(i=>`<td>${fmt(v(p.values[i]))}</td>`).join('')}<td class="tc">${fmt(tot)}</td><td><span style="font-size:.72rem;color:var(--muted2)">${pct}%</span><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div></td></tr>`;
+    });
   });
-  if (id === "data") renderInputForm();
+  document.getElementById('tBody').innerHTML=rows;
+  document.getElementById('tFoot').innerHTML=`<td>합 계</td><td></td>`+ai.map(i=>`<td>${wt[i].toLocaleString()}</td>`).join('')+`<td>${gt.toLocaleString()}</td><td>100%</td>`;
 }
 
-// ── 초기 렌더 ──────────────────────────────────────────
+function setF(type,val,el){
+  if(type==='line') fLine=val;
+  else if(type==='bar') fBar=val;
+  else fTable=val;
+  el.closest('.filter-bar').querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(type==='line') renderLine();
+  else if(type==='bar') renderBar();
+  else renderTable();
+}
+
+function renderInputForm(){
+  const colLabels=['단지명','분류',...weeks,''];
+  const hdr=`<div class="ih-row">${colLabels.map((l,i)=>`<div class="icl"${i===colLabels.length-1?' style="width:28px"':''}>${l}</div>`).join('')}</div>`;
+  let html='';
+  CATS.forEach(cat=>{
+    const m=CM[cat],ps=projects.map((p,i)=>({p,i})).filter(({p})=>p.cat===cat);
+    html+=`<div class="input-section"><div class="ist ${m.ist}">${m.icon} ${cat}</div>${hdr}
+      ${ps.map(({p,i})=>`<div class="ir">
+        <input class="if_ nf" placeholder="단지명" value="${p.name}" oninput="projects[${i}].name=this.value">
+        <select class="if_" onchange="projects[${i}].cat=this.value;renderInputForm()">
+          ${CATS.map(c=>`<option value="${c}"${c===p.cat?' selected':''}>${c}</option>`).join('')}
+        </select>
+        ${p.values.map((val,wi)=>`<input class="if_" type="number" min="0" placeholder="-" value="${val!=null?val:''}" oninput="projects[${i}].values[${wi}]=this.value===''?null:parseInt(this.value)||0">`).join('')}
+        <button class="db" onclick="removeRow(${i})">×</button>
+      </div>`).join('')}
+      <button class="ab" onclick="addRow('${cat}')">+ ${cat} 단지 추가</button>
+    </div>`;
+  });
+  document.getElementById('inputBody').innerHTML=html;
+}
+
+function addRow(cat){projects.push({cat,name:'',values:new Array(weeks.length).fill(null)});renderInputForm();}
+function removeRow(idx){if(projects.length<=1)return alert('최소 1개 단지가 필요합니다.');projects.splice(idx,1);renderInputForm();}
+function applyData(){renderAll();showTab('dashboard');}
+
+function showTab(id){
+  ['dashboard','data'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===id);
+    document.getElementById('content-'+t).classList.toggle('active',t===id);
+  });
+  if(id==='data') renderInputForm();
+}
+
+function renderAll(){renderKPI();renderCatRow();renderLine();renderCatLine();renderDoughnut();renderBar();renderTable();}
 renderAll();
 </script>
 </body>
