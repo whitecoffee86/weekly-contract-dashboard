@@ -34,7 +34,7 @@
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-  .wrapper{padding:2rem 2.5rem;max-width:1600px;margin:0 auto}
+  .wrapper{padding:1.5rem 1.5rem;max-width:100%;margin:0 auto;box-sizing:border-box}
 
   /* ── 헤더 ── */
   .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:2px solid var(--border)}
@@ -89,11 +89,12 @@
   /* ── 카드 ── */
   .main-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
   .full-width{grid-column:1/-1}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.4rem}
-  .card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.1rem}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;min-width:0}
+  .card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem}
   .card-title{font-size:.82rem;font-weight:700;color:var(--text)}
   .card-subtitle{font-size:.68rem;color:var(--muted2);margin-top:2px}
   .chart-wrap{position:relative;height:210px}
+  @media(max-width:800px){.main-grid{grid-template-columns:1fr}.full-width{grid-column:1}}
 
   /* ── 필터 ── */
   .filter-bar{display:flex;gap:.3rem;flex-wrap:wrap}
@@ -161,8 +162,9 @@
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   .kpi-card:nth-child(1){animation-delay:.04s}.kpi-card:nth-child(2){animation-delay:.08s}
   .kpi-card:nth-child(3){animation-delay:.12s}.kpi-card:nth-child(4){animation-delay:.16s}.kpi-card:nth-child(5){animation-delay:.2s}
-  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.main-grid{grid-template-columns:1fr}.cat-row{grid-template-columns:1fr 1fr}}
-  @media(max-width:720px){.wrapper{padding:1rem}.kpi-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.cat-row{grid-template-columns:1fr 1fr}}
+  @media(max-width:800px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.cat-row{grid-template-columns:1fr 1fr}.main-grid{grid-template-columns:1fr}}
+  @media(max-width:500px){.kpi-grid{grid-template-columns:1fr 1fr}.wrapper{padding:.75rem}}
 </style>
 </head>
 <body>
@@ -191,16 +193,16 @@
     <div class="kpi-grid" id="dKpiGrid"></div>
     <div class="main-grid">
       <div class="card">
-        <div class="card-header"><div><div class="card-title">분류별 금일 계약</div><div class="card-subtitle">카테고리별 당일 계약 세대수</div></div></div>
+        <div class="card-header"><div><div class="card-title">카테고리별 금일 계약</div><div class="card-subtitle">카테고리별 당일 계약 세대수</div></div></div>
         <div class="chart-wrap" style="height:200px"><canvas id="dCatBarChart"></canvas></div>
       </div>
       <div class="card">
-        <div class="card-header"><div><div class="card-title">분류별 계약율</div><div class="card-subtitle">공급세대 대비 누계 계약율</div></div></div>
+        <div class="card-header"><div><div class="card-title">카테고리별 계약율</div><div class="card-subtitle">공급세대 대비 누계 계약율</div></div></div>
         <div class="chart-wrap" style="height:200px"><canvas id="dRateChart"></canvas></div>
       </div>
       <div class="card full-width">
         <div class="card-header">
-          <div><div class="card-title">일별 계약 트랜드</div><div class="card-subtitle">날짜별 계약 건수 추이 · 적용 버튼 클릭 시 자동 누적</div></div>
+          <div><div class="card-title">일별 계약 트랜드</div><div class="card-subtitle">날짜별 계약 건수 추이</div></div>
           <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
             <select id="trendDays" onchange="renderDTrend()" class="if_" style="width:90px;font-family:'Pretendard',sans-serif;font-size:.72rem">
               <option value="14">최근 14일</option>
@@ -221,7 +223,7 @@
       </div>
       <div class="card full-width">
         <div class="card-header">
-          <div><div class="card-title">단지별 잔여세대 현황</div><div class="card-subtitle">누계 계약 + 잔여 스택</div></div>
+          <div><div class="card-title">단지별 잔여세대 현황</div><div class="card-subtitle">누계 계약 및 잔여세대</div></div>
           <div class="filter-bar">
             <button class="fb fa active" onclick="setDF('remain','all',this)">전체</button>
             <button class="fb fj" onclick="setDF('remain','집중관리',this)">집중관리</button>
@@ -681,10 +683,12 @@ function renderDKPI(){
 
 function renderDCatBar(){
   const data=CATS.map(cat=>dailyProjects.filter(p=>p.cat===cat).reduce((s,p)=>s+p.today,0));
+  const maxVal=Math.max(...data,1);
   if(dCatBI)dCatBI.destroy();
   dCatBI=new Chart(document.getElementById('dCatBarChart'),{type:'bar',
     data:{labels:CATS,datasets:[{data,backgroundColor:CATS.map(c=>CM[c].color),borderRadius:4,barPercentage:.5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT},scales:SC}});
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT},
+      scales:{...SC,y:{...SC.y,min:0,max:Math.ceil(maxVal),ticks:{...SC.y.ticks,stepSize:1,precision:0}}}}});
 }
 
 function renderDRateChart(){
