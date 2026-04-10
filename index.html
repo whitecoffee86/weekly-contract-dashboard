@@ -3,245 +3,373 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>주간 계약 트랜드 대시보드</title>
+<title>계약 트랜드 대시보드</title>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg:#0b0f1a; --surface:#111827; --surface2:#1a2235; --border:rgba(255,255,255,0.07);
-    --accent:#4f8ef7; --accent2:#7c3aed; --text:#f1f5f9; --muted:#64748b; --muted2:#94a3b8;
+  :root{
+    --bg:#f5f6f8;
+    --surface:#ffffff;
+    --surface2:#f0f2f5;
+    --surface3:#e8eaed;
+    --border:#e2e5ea;
+    --border2:#c8cdd5;
+    --text:#1a1e2a;
+    --text2:#3a4050;
+    --muted:#7a8294;
+    --muted2:#9aa0b0;
+
+    --cj:#e53935;   /* 집중관리: 비비드 레드 */
+    --ci:#1976d2;   /* 일반: 비비드 블루 */
+    --cg:#2e7d32;   /* 공사비확보: 비비드 그린 */
+    --cs:#f57c00;   /* 신규: 비비드 오렌지 */
+
+    --cj-bg:#ffeaea;
+    --ci-bg:#e3f0fc;
+    --cg-bg:#e6f4e7;
+    --cs-bg:#fff3e0;
+
+    --accent:#1976d2;
+    --accent-light:#e3f0fc;
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-    background:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(79,142,247,0.12) 0%,transparent 60%),
-               radial-gradient(ellipse 60% 40% at 80% 110%,rgba(124,58,237,0.10) 0%,transparent 60%)}
-  .wrapper{position:relative;z-index:1;padding:2rem 2.5rem;max-width:1600px;margin:0 auto}
+  body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  .wrapper{padding:2rem 2.5rem;max-width:1600px;margin:0 auto}
 
-  .header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
-  .header-left h1{font-size:1.75rem;font-weight:800;letter-spacing:-0.03em;background:linear-gradient(135deg,#fff 0%,#94a3b8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.25rem}
-  .header-left p{font-size:.78rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
-  .header-right{display:flex;gap:.75rem}
-  .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:8px;font-size:.8rem;font-weight:600;font-family:'Pretendard',sans-serif;cursor:pointer;border:none;transition:all .18s}
-  .btn-primary{background:var(--accent);color:#fff}
-  .btn-primary:hover{background:#6a9ef8;transform:translateY(-1px);box-shadow:0 4px 20px rgba(79,142,247,.35)}
-  .btn-ghost{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
-  .btn-ghost:hover{background:var(--surface);color:var(--text)}
+  /* ── 헤더 ── */
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:2px solid var(--border)}
+  .header-left h1{font-size:1.5rem;font-weight:700;letter-spacing:-0.02em;color:var(--text);margin-bottom:.15rem}
+  .header-left p{font-size:.73rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .header-right{display:flex;gap:.5rem}
+  .btn{display:inline-flex;align-items:center;gap:.4rem;padding:.48rem .95rem;border-radius:5px;font-size:.77rem;font-weight:600;font-family:'Pretendard',sans-serif;cursor:pointer;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff;border:1px solid var(--accent)}
+  .btn-primary:hover{background:#1e4480}
+  .btn-ghost{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+  .btn-ghost:hover{background:var(--surface2)}
+  .btn-warn{background:#fff;color:#8b1a1a;border:1px solid #d9b0b0}
+  .btn-warn:hover{background:#fdf0f0}
 
-  .tab-bar{display:flex;gap:.4rem;margin-bottom:1.5rem}
-  .tab{padding:.5rem 1rem;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:all .15s;color:var(--muted2);background:var(--surface2)}
-  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* ── 탭 ── */
+  .tab-bar{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:2px solid var(--border)}
+  .tab{padding:.55rem 1.1rem;font-size:.8rem;font-weight:600;cursor:pointer;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;color:var(--muted);background:transparent}
+  .tab:hover{color:var(--text2)}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
   .tab-content{display:none}.tab-content.active{display:block}
 
-  /* KPI */
-  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem}
-  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.25rem 1.4rem;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;animation:fadeUp .4s ease both}
-  .kpi-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+  /* ── KPI ── */
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.875rem;margin-bottom:1.25rem}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;position:relative;overflow:hidden;transition:box-shadow .2s;animation:fadeUp .3s ease both}
+  .kpi-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.08)}
   .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc)}
-  .kpi-icon{width:34px;height:34px;border-radius:10px;background:var(--kb);display:flex;align-items:center;justify-content:center;font-size:.95rem;margin-bottom:.875rem}
-  .kpi-label{font-size:.72rem;color:var(--muted2);font-weight:500;letter-spacing:.04em;margin-bottom:.25rem}
-  .kpi-value{font-size:1.8rem;font-weight:800;letter-spacing:-.04em;line-height:1}
-  .kpi-unit{font-size:.9rem;font-weight:500;color:var(--muted2);margin-left:3px}
-  .kpi-sub{font-size:.7rem;color:var(--muted);margin-top:.4rem}
-  .kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:.67rem;font-weight:600;padding:2px 7px;border-radius:20px;margin-top:.4rem}
-  .bd{background:rgba(239,68,68,.15);color:#f87171}.bu{background:rgba(16,185,129,.15);color:#34d399}.bn{background:rgba(100,116,139,.15);color:var(--muted2)}
+  .kpi-icon{font-size:.88rem;margin-bottom:.65rem;color:var(--muted)}
+  .kpi-label{font-size:.68rem;color:var(--muted);font-weight:600;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.2rem}
+  .kpi-value{font-size:1.65rem;font-weight:700;letter-spacing:-.03em;color:var(--text);line-height:1}
+  .kpi-unit{font-size:.8rem;font-weight:500;color:var(--muted);margin-left:3px}
+  .kpi-sub{font-size:.68rem;color:var(--muted2);margin-top:.35rem}
+  .kpi-badge{display:inline-flex;align-items:center;gap:2px;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:3px;margin-top:.35rem}
+  .bd{background:#ffeaea;color:#c62828}.bu{background:#e8f5e9;color:#1b5e20}.bn{background:var(--surface2);color:var(--muted)}
 
-  /* 분류 배지 */
-  .cb{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:20px}
-  .cj{background:rgba(239,68,68,.15);color:#ef4444}
-  .ci{background:rgba(79,142,247,.15);color:#4f8ef7}
-  .cg{background:rgba(16,185,129,.15);color:#10b981}
-  .cs{background:rgba(245,158,11,.15);color:#f59e0b}
+  /* ── 분류 배지 ── */
+  .cb{display:inline-flex;align-items:center;gap:3px;font-size:.67rem;font-weight:700;padding:2px 8px;border-radius:3px;font-family:'Pretendard',sans-serif;letter-spacing:.01em}
+  .cj{background:var(--cj-bg);color:var(--cj);border:1px solid #e8c0c0}
+  .ci{background:var(--ci-bg);color:var(--ci);border:1px solid #bdd0ee}
+  .cg{background:var(--cg-bg);color:var(--cg);border:1px solid #b0d8c0}
+  .cs{background:var(--cs-bg);color:var(--cs);border:1px solid #ddd0a8}
 
-  /* 분류 요약 행 */
-  .cat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
-  .cat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem}
-  .cat-val{font-size:1.5rem;font-weight:800;letter-spacing:-.03em}
-  .cat-bar-bg{height:4px;background:rgba(255,255,255,.07);border-radius:99px;margin-top:.5rem}
-  .cat-bar-fill{height:4px;border-radius:99px}
+  /* ── 분류 요약 카드 ── */
+  .cat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:1.25rem}
+  .cat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.9rem 1.1rem;display:flex;align-items:center;gap:.875rem;transition:box-shadow .2s;border-left:3px solid var(--cat-c)}
+  .cat-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.07)}
+  .cat-val{font-size:1.35rem;font-weight:700;letter-spacing:-.02em}
+  .cat-meta{font-size:.72rem;color:var(--muted2);font-family:'Pretendard',sans-serif;font-weight:500;margin-top:.3rem;line-height:1.7}
+  .cat-meta strong{color:var(--text2);font-weight:600}
+  .cat-bar-bg{height:3px;background:var(--surface3);border-radius:99px;margin-top:.4rem}
+  .cat-bar-fill{height:3px;border-radius:99px}
 
-  /* 카드 */
-  .main-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem}
+  /* ── 카드 ── */
+  .main-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
   .full-width{grid-column:1/-1}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;animation:fadeUp .4s ease both;animation-delay:.1s}
-  .card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem}
-  .card-title{font-size:.875rem;font-weight:700;letter-spacing:-.01em}
-  .card-subtitle{font-size:.72rem;color:var(--muted);margin-top:2px}
-  .chart-wrap{position:relative;height:220px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.4rem}
+  .card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.1rem}
+  .card-title{font-size:.82rem;font-weight:700;color:var(--text)}
+  .card-subtitle{font-size:.68rem;color:var(--muted2);margin-top:2px}
+  .chart-wrap{position:relative;height:210px}
 
-  /* 필터 */
-  .filter-bar{display:flex;gap:.4rem;flex-wrap:wrap}
-  .fb{padding:.3rem .7rem;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted2);font-family:'Pretendard',sans-serif;transition:all .15s}
+  /* ── 필터 ── */
+  .filter-bar{display:flex;gap:.3rem;flex-wrap:wrap}
+  .fb{padding:.25rem .65rem;border-radius:4px;font-size:.7rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Pretendard',sans-serif;transition:all .15s}
+  .fb:hover{border-color:var(--border2);color:var(--text2)}
   .fb.active{color:#fff;border-color:transparent}
   .fa.active{background:var(--accent)}
-  .fj.active{background:#ef4444}.fi.active{background:#4f8ef7}.fg.active{background:#10b981}.fs.active{background:#f59e0b}
+  .fj.active{background:var(--cj)}.fi.active{background:var(--ci)}.fg.active{background:var(--cg)}.fs.active{background:var(--cs)}
 
-  /* 테이블 */
+  /* ── 테이블 ── */
   .table-wrap{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:.82rem}
-  thead th{text-align:left;padding:.6rem .8rem;font-size:.68rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
+  table{width:100%;border-collapse:collapse;font-size:.8rem}
+  thead th{text-align:left;padding:.55rem .75rem;font-size:.65rem;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);font-family:'Pretendard',sans-serif}
   thead th:not(:first-child):not(:nth-child(2)){text-align:right}
-  tbody tr{transition:background .12s}
-  tbody tr:hover{background:rgba(255,255,255,.03)}
-  tbody td{padding:.6rem .8rem;border-bottom:1px solid var(--border);color:var(--muted2);white-space:nowrap}
+  tbody tr:nth-child(even){background:#fafbfc}
+  tbody tr{transition:background .1s}
+  tbody tr:hover{background:#f0f4fa}
+  tbody td{padding:.55rem .75rem;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap;font-size:.79rem;font-family:'Pretendard',sans-serif}
   tbody td:first-child{color:var(--text);font-weight:500}
-  tbody td:not(:first-child):not(:nth-child(2)){text-align:right;font-family:'DM Mono',monospace;font-size:.79rem}
-  .tc{color:var(--accent);font-weight:700}
-  .mini-bar{height:4px;background:rgba(255,255,255,.07);border-radius:99px;margin-top:3px;width:60px}
-  .mini-bar-fill{height:4px;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
-  tfoot td{padding:.7rem .8rem;font-weight:700;color:var(--text);background:rgba(79,142,247,.06);font-family:'DM Mono',monospace;font-size:.82rem}
-  tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accent)}
-  .sec-row td{background:rgba(255,255,255,.02);font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:.4rem .8rem}
+  tbody td:not(:first-child):not(:nth-child(2)){text-align:right;font-family:'DM Mono',monospace;font-size:.76rem}
+  .tc{color:#1976d2;font-weight:700}.tc-warn{color:#e53935;font-weight:700}
+  .mini-bar{height:3px;background:var(--surface3);border-radius:99px;margin-top:3px;width:56px}
+  .mini-bar-fill{height:3px;border-radius:99px}
+  tfoot td{padding:.65rem .75rem;font-weight:700;color:var(--text);background:#eef3fb;font-family:'Pretendard',sans-serif;font-size:.8rem;border-top:2px solid var(--border2)}
+  tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accent);font-family:'DM Mono',monospace}
+  .sec-row td{background:#f4f6f9;font-size:.7rem;font-weight:600;color:var(--muted);padding:.35rem .75rem;font-family:'Pretendard',sans-serif}
+  .sec-row td .meta-nums{font-size:.72rem;color:var(--text2);font-weight:500;margin-left:8px}
+  .sec-row td .meta-nums strong{color:var(--text);font-weight:700}
 
-  /* 입력 */
-  .input-panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-  .panel-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);background:var(--surface2)}
-  .panel-header h2{font-size:.875rem;font-weight:700}
-  .panel-body{padding:1.5rem}
-  .input-section{margin-bottom:1.5rem}
-  .ist{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.6rem;padding-left:.5rem;border-left:3px solid}
-  .ist-j{color:#ef4444;border-color:#ef4444}.ist-i{color:#4f8ef7;border-color:#4f8ef7}
-  .ist-g{color:#10b981;border-color:#10b981}.ist-s{color:#f59e0b;border-color:#f59e0b}
-  .ih-row{display:grid;grid-template-columns:180px 90px repeat(6,1fr) auto;gap:.5rem;margin-bottom:.4rem}
-  .ir{display:grid;grid-template-columns:180px 90px repeat(6,1fr) auto;gap:.5rem;align-items:center;margin-bottom:.35rem}
-  .icl{font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:.05em;text-align:right;padding:0 .2rem}
+  .daily-table thead th{background:var(--surface2)}
+  .today-col{color:var(--accent);font-weight:700}
+  .pct-bar{height:3px;background:var(--surface3);border-radius:99px;margin-top:3px;width:50px}
+  .pct-fill{height:3px;border-radius:99px}
+
+  /* ── 입력 ── */
+  .input-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.4rem;border-bottom:1px solid var(--border);background:var(--surface2)}
+  .panel-header h2{font-size:.82rem;font-weight:700;color:var(--text)}
+  .panel-body{padding:1.4rem}
+  .dih{display:grid;grid-template-columns:200px 90px 100px 100px 100px auto;gap:.4rem;margin-bottom:.35rem}
+  .daily-input-grid{display:grid;grid-template-columns:200px 90px 100px 100px 100px auto;gap:.4rem;align-items:center;margin-bottom:.3rem}
+  .icl{font-size:.63rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-align:right;font-family:'Pretendard',sans-serif;text-transform:uppercase}
   .icl:first-child,.icl:nth-child(2){text-align:left}
-  .if_{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.4rem .6rem;color:var(--text);font-size:.78rem;font-family:'DM Mono',monospace;text-align:right;width:100%;outline:none;transition:border-color .15s,background .15s}
-  .if_:focus{border-color:var(--accent);background:rgba(79,142,247,.05)}
-  .if_.nf{text-align:left;font-family:'Pretendard',sans-serif;font-size:.8rem}
-  .db{width:28px;height:28px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:6px;color:#f87171;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
-  .db:hover{background:rgba(239,68,68,.25)}
-  .ab{margin-top:.5rem;display:inline-flex;align-items:center;gap:.4rem;background:none;border:1px dashed var(--border);border-radius:8px;padding:.45rem 1rem;color:var(--muted);font-size:.75rem;font-weight:500;cursor:pointer;font-family:'Pretendard',sans-serif;transition:all .15s;width:100%;justify-content:center}
-  .ab:hover{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.05)}
+  .if_{background:var(--bg);border:1px solid var(--border2);border-radius:5px;padding:.38rem .55rem;color:var(--text);font-size:.76rem;font-family:'DM Mono',monospace;text-align:right;width:100%;outline:none;transition:border-color .15s}
+  .if_:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(26,58,107,.1)}
+  .if_.nf{text-align:left;font-family:'Pretendard',sans-serif;font-size:.78rem}
+  .db{width:26px;height:26px;background:#fff;border:1px solid #e8c0c0;border-radius:4px;color:var(--cj);cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .db:hover{background:#fdf0f0}
+  .ab{margin-top:.5rem;display:inline-flex;align-items:center;gap:.4rem;background:none;border:1px dashed var(--border2);border-radius:5px;padding:.4rem .9rem;color:var(--muted);font-size:.73rem;font-weight:500;cursor:pointer;font-family:'Pretendard',sans-serif;transition:all .15s;width:100%;justify-content:center}
+  .ab:hover{border-color:var(--accent);color:var(--accent)}
 
-  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-  .kpi-card:nth-child(1){animation-delay:.05s}.kpi-card:nth-child(2){animation-delay:.1s}
-  .kpi-card:nth-child(3){animation-delay:.15s}.kpi-card:nth-child(4){animation-delay:.2s}.kpi-card:nth-child(5){animation-delay:.25s}
-  select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer}
+  /* ── 이력 ── */
+  .history-box{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:.75rem 1rem;margin-top:.875rem;max-height:150px;overflow-y:auto}
+  .history-box p{font-size:.72rem;color:var(--text2);font-family:'Pretendard',sans-serif;line-height:1.9;border-bottom:1px solid var(--border);padding-bottom:.25rem;margin-bottom:.25rem}
+  .history-box p:last-child{border-bottom:none;margin-bottom:0}
+  .history-box p strong{color:var(--text);font-weight:700}
+  .history-empty{font-size:.72rem;color:var(--muted);font-style:italic}
+
+  /* ── 토스트 ── */
+  .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);border:1px solid var(--border2);border-radius:6px;padding:.7rem 1rem;font-size:.77rem;color:var(--text2);z-index:999;opacity:0;transform:translateY(6px);transition:all .3s;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+  .toast.show{opacity:1;transform:none}
+  .t-acc{color:#1a4d35;font-weight:700}
+
+  select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;background:var(--bg)}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .kpi-card:nth-child(1){animation-delay:.04s}.kpi-card:nth-child(2){animation-delay:.08s}
+  .kpi-card:nth-child(3){animation-delay:.12s}.kpi-card:nth-child(4){animation-delay:.16s}.kpi-card:nth-child(5){animation-delay:.2s}
   @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.main-grid{grid-template-columns:1fr}.cat-row{grid-template-columns:1fr 1fr}}
   @media(max-width:720px){.wrapper{padding:1rem}.kpi-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
+<div class="toast" id="toast"></div>
 <div class="wrapper">
+
   <div class="header">
     <div class="header-left">
-      <h1>주간 계약 트랜드</h1>
-      <p>Weekly Contract Trend Dashboard</p>
+      <h1>계약 트랜드 대시보드</h1>
+      <p>Contract Trend Dashboard · 2026</p>
     </div>
     <div class="header-right">
       <button class="btn btn-ghost" onclick="showTab('data')">✏️ 데이터 입력</button>
-      <button class="btn btn-primary" onclick="showTab('dashboard')">📊 대시보드</button>
+      <button class="btn btn-primary" onclick="showTab('weekly')">📅 주간 트랜드</button>
     </div>
   </div>
 
   <div class="tab-bar">
-    <div class="tab active" onclick="showTab('dashboard')" id="tab-dashboard">📊 대시보드</div>
-    <div class="tab" onclick="showTab('data')" id="tab-data">✏️ 데이터 입력</div>
+    <div class="tab active" onclick="showTab('daily')"  id="tab-daily">📆 일간 현황</div>
+    <div class="tab"        onclick="showTab('weekly')" id="tab-weekly">📅 주간 트랜드</div>
+    <div class="tab"        onclick="showTab('data')"   id="tab-data">✏️ 데이터 입력</div>
   </div>
 
-  <!-- 대시보드 -->
-  <div class="tab-content active" id="content-dashboard">
-    <div class="kpi-grid" id="kpiGrid"></div>
-    <div class="cat-row" id="catRow"></div>
+  <!-- ══════ 일간 탭 ══════ -->
+  <div class="tab-content active" id="content-daily">
+    <div class="kpi-grid" id="dKpiGrid"></div>
     <div class="main-grid">
-
-      <!-- 주간 추이 -->
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">분류별 금일 계약</div><div class="card-subtitle">카테고리별 당일 계약 세대수</div></div></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="dCatBarChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">분류별 계약율</div><div class="card-subtitle">공급세대 대비 누계 계약율</div></div></div>
+        <div class="chart-wrap" style="height:200px"><canvas id="dRateChart"></canvas></div>
+      </div>
       <div class="card full-width">
         <div class="card-header">
-          <div><div class="card-title">주간 계약 추이</div><div class="card-subtitle">분류별 주차 계약 세대수</div></div>
-          <div class="filter-bar">
-            <button class="fb fa active" onclick="setF('line','all',this)">전체</button>
-            <button class="fb fj" onclick="setF('line','집중관리',this)">집중관리</button>
-            <button class="fb fi" onclick="setF('line','일반',this)">일반</button>
-            <button class="fb fg" onclick="setF('line','공사비확보',this)">공사비확보</button>
-            <button class="fb fs" onclick="setF('line','신규',this)">신규</button>
-          </div>
-        </div>
-        <div class="chart-wrap" style="height:240px"><canvas id="lineChart"></canvas></div>
-      </div>
-
-      <!-- 분류별 멀티라인 -->
-      <div class="card">
-        <div class="card-header">
-          <div><div class="card-title">분류별 주간 추이</div><div class="card-subtitle">카테고리별 주차 계약 세대수</div></div>
-        </div>
-        <div class="chart-wrap"><canvas id="catLineChart"></canvas></div>
-      </div>
-
-      <!-- 도넛 -->
-      <div class="card">
-        <div class="card-header">
-          <div><div class="card-title">분류별 누적 비중</div><div class="card-subtitle">전체 계약 대비 카테고리 비율</div></div>
-        </div>
-        <div class="chart-wrap"><canvas id="doughnutChart"></canvas></div>
-      </div>
-
-      <!-- 단지별 막대 -->
-      <div class="card full-width">
-        <div class="card-header">
-          <div><div class="card-title">단지별 주간 계약 현황</div><div class="card-subtitle">주차별 누적 비교 · 분류별 색상 구분</div></div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-            <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end" id="barLegend"></div>
+          <div><div class="card-title">일별 계약 트랜드</div><div class="card-subtitle">날짜별 계약 건수 추이 · 적용 버튼 클릭 시 자동 누적</div></div>
+          <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+            <select id="trendDays" onchange="renderDTrend()" class="if_" style="width:90px;font-family:'Pretendard',sans-serif;font-size:.72rem">
+              <option value="14">최근 14일</option>
+              <option value="30" selected>최근 30일</option>
+              <option value="60">최근 60일</option>
+              <option value="9999">전체</option>
+            </select>
             <div class="filter-bar">
-            <button class="fb fa active" onclick="setF('bar','all',this)">전체</button>
-            <button class="fb fj" onclick="setF('bar','집중관리',this)">집중관리</button>
-            <button class="fb fi" onclick="setF('bar','일반',this)">일반</button>
-            <button class="fb fg" onclick="setF('bar','공사비확보',this)">공사비확보</button>
-            <button class="fb fs" onclick="setF('bar','신규',this)">신규</button>
-          </div>
+              <button class="fb fa active" onclick="setDF('trend','all',this)">전체</button>
+              <button class="fb fj" onclick="setDF('trend','집중관리',this)">집중관리</button>
+              <button class="fb fi" onclick="setDF('trend','일반',this)">일반</button>
+              <button class="fb fg" onclick="setDF('trend','공사비확보',this)">공사비확보</button>
+              <button class="fb fs" onclick="setDF('trend','신규',this)">신규</button>
+            </div>
           </div>
         </div>
-        <div id="barWrap" style="position:relative"><canvas id="barChart"></canvas></div>
+        <div class="chart-wrap" style="height:260px"><canvas id="dTrendChart"></canvas></div>
       </div>
-
-      <!-- 테이블 -->
       <div class="card full-width">
         <div class="card-header">
-          <div><div class="card-title">단지별 상세 현황</div><div class="card-subtitle">분류 포함 주차별 계약 세대수</div></div>
+          <div><div class="card-title">단지별 잔여세대 현황</div><div class="card-subtitle">누계 계약 + 잔여 스택</div></div>
           <div class="filter-bar">
-            <button class="fb fa active" onclick="setF('table','all',this)">전체</button>
-            <button class="fb fj" onclick="setF('table','집중관리',this)">집중관리</button>
-            <button class="fb fi" onclick="setF('table','일반',this)">일반</button>
-            <button class="fb fg" onclick="setF('table','공사비확보',this)">공사비확보</button>
-            <button class="fb fs" onclick="setF('table','신규',this)">신규</button>
+            <button class="fb fa active" onclick="setDF('remain','all',this)">전체</button>
+            <button class="fb fj" onclick="setDF('remain','집중관리',this)">집중관리</button>
+            <button class="fb fi" onclick="setDF('remain','일반',this)">일반</button>
+            <button class="fb fg" onclick="setDF('remain','공사비확보',this)">공사비확보</button>
+            <button class="fb fs" onclick="setDF('remain','신규',this)">신규</button>
+          </div>
+        </div>
+        <div id="dRemainWrap" style="position:relative"><canvas id="dRemainChart"></canvas></div>
+      </div>
+      <div class="card full-width">
+        <div class="card-header">
+          <div><div class="card-title">단지별 일간 상세 현황</div><div class="card-subtitle" id="dTableDate"></div></div>
+          <div class="filter-bar">
+            <button class="fb fa active" onclick="setDF('table','all',this)">전체</button>
+            <button class="fb fj" onclick="setDF('table','집중관리',this)">집중관리</button>
+            <button class="fb fi" onclick="setDF('table','일반',this)">일반</button>
+            <button class="fb fg" onclick="setDF('table','공사비확보',this)">공사비확보</button>
+            <button class="fb fs" onclick="setDF('table','신규',this)">신규</button>
           </div>
         </div>
         <div class="table-wrap">
-          <table><thead><tr id="tHead"></tr></thead><tbody id="tBody"></tbody><tfoot><tr id="tFoot"></tr></tfoot></table>
+          <table class="daily-table"><thead><tr id="dTHead"></tr></thead><tbody id="dTBody"></tbody><tfoot><tr id="dTFoot"></tr></tfoot></table>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 데이터 입력 -->
+  <!-- ══════ 주간 탭 ══════ -->
+  <div class="tab-content" id="content-weekly">
+    <div class="kpi-grid" id="wKpiGrid"></div>
+    <div class="cat-row"  id="wCatRow"></div>
+    <div class="main-grid">
+      <div class="card full-width">
+        <div class="card-header">
+          <div><div class="card-title">주간 계약 추이</div><div class="card-subtitle">주차별 총 계약 세대수</div></div>
+          <div class="filter-bar">
+            <button class="fb fa active" onclick="setWF('line','all',this)">전체</button>
+            <button class="fb fj" onclick="setWF('line','집중관리',this)">집중관리</button>
+            <button class="fb fi" onclick="setWF('line','일반',this)">일반</button>
+            <button class="fb fg" onclick="setWF('line','공사비확보',this)">공사비확보</button>
+            <button class="fb fs" onclick="setWF('line','신규',this)">신규</button>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:230px"><canvas id="wLineChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">분류별 주간 추이</div><div class="card-subtitle">카테고리별 비교</div></div></div>
+        <div class="chart-wrap"><canvas id="wCatLineChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">분류별 누적 비중</div><div class="card-subtitle">4주 누계 기준</div></div></div>
+        <div class="chart-wrap"><canvas id="wDoughnutChart"></canvas></div>
+      </div>
+      <div class="card full-width">
+        <div class="card-header">
+          <div><div class="card-title">단지별 주간 계약</div><div class="card-subtitle">주차별 스택 · 분류 색상</div></div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end" id="wBarLegend"></div>
+            <div class="filter-bar">
+              <button class="fb fa active" onclick="setWF('bar','all',this)">전체</button>
+              <button class="fb fj" onclick="setWF('bar','집중관리',this)">집중관리</button>
+              <button class="fb fi" onclick="setWF('bar','일반',this)">일반</button>
+              <button class="fb fg" onclick="setWF('bar','공사비확보',this)">공사비확보</button>
+              <button class="fb fs" onclick="setWF('bar','신규',this)">신규</button>
+            </div>
+          </div>
+        </div>
+        <div id="wBarWrap" style="position:relative"><canvas id="wBarChart"></canvas></div>
+      </div>
+      <div class="card full-width">
+        <div class="card-header">
+          <div><div class="card-title">단지별 상세 현황</div><div class="card-subtitle">주차별 계약 세대수</div></div>
+          <div class="filter-bar">
+            <button class="fb fa active" onclick="setWF('table','all',this)">전체</button>
+            <button class="fb fj" onclick="setWF('table','집중관리',this)">집중관리</button>
+            <button class="fb fi" onclick="setWF('table','일반',this)">일반</button>
+            <button class="fb fg" onclick="setWF('table','공사비확보',this)">공사비확보</button>
+            <button class="fb fs" onclick="setWF('table','신규',this)">신규</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr id="wTHead"></tr></thead><tbody id="wTBody"></tbody><tfoot><tr id="wTFoot"></tr></tfoot></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ 데이터 입력 탭 ══════ -->
   <div class="tab-content" id="content-data">
     <div class="input-panel">
       <div class="panel-header">
-        <h2>📋 데이터 입력</h2>
-        <button class="btn btn-primary" onclick="applyData()">✅ 적용하고 대시보드 보기</button>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <h2>📆 일간 데이터 입력</h2>
+          <span style="font-size:.72rem;color:var(--muted)">기준일:
+            <input type="text" id="dailyDateInput" class="if_" style="width:100px;display:inline-block;text-align:center" placeholder="예) 26/04/09">
+          </span>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-warn" onclick="resetWeekly()">↺ 주간 초기화</button>
+          <button class="btn btn-primary" onclick="applyDailyAndUpdateWeekly()">✅ 적용 + 주간 자동반영</button>
+        </div>
       </div>
-      <div class="panel-body" id="inputBody"></div>
+      <div class="panel-body">
+        <div class="dih">
+          <div class="icl" style="text-align:left">단지명</div>
+          <div class="icl" style="text-align:left">분류</div>
+          <div class="icl">공급세대</div>
+          <div class="icl">전일누계</div>
+          <div class="icl">금일계약</div>
+          <div class="icl" style="width:26px"></div>
+        </div>
+        <div id="dInputGrid"></div>
+        <button class="ab" onclick="addDailyRow()">+ 단지 추가</button>
+        <div style="margin-top:1rem">
+          <div style="font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem">주간 반영 이력</div>
+          <div class="history-box" id="historyBox"><p class="history-empty">아직 반영 이력이 없습니다.</p></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
+/* ═══ 상수 ═══ */
 const CATS=['집중관리','일반','공사비확보','신규'];
 const CM={
-  '집중관리':{color:'#ef4444',bg:'rgba(239,68,68,0.12)',cls:'cj',ist:'ist-j',icon:'🔴'},
-  '일반':    {color:'#4f8ef7',bg:'rgba(79,142,247,0.12)',cls:'ci',ist:'ist-i',icon:'🔵'},
-  '공사비확보':{color:'#10b981',bg:'rgba(16,185,129,0.12)',cls:'cg',ist:'ist-g',icon:'🟢'},
-  '신규':    {color:'#f59e0b',bg:'rgba(245,158,11,0.12)',cls:'cs',ist:'ist-s',icon:'🟡'},
+  '집중관리':{color:'#e53935',bg:'#ffeaea',cls:'cj',catC:'#e53935'},
+  '일반':    {color:'#1976d2',bg:'#e3f0fc',cls:'ci',catC:'#1976d2'},
+  '공사비확보':{color:'#2e7d32',bg:'#e6f4e7',cls:'cg',catC:'#2e7d32'},
+  '신규':    {color:'#f57c00',bg:'#fff3e0',cls:'cs',catC:'#f57c00'},
 };
-let weeks=['1주(3/13~3/19)','2주(3/20~3/26)','3주(3/27~4/2)','4주(4/3~4/9)','5주차','6주차'];
-let projects=[
-  // 집중관리: 1주=3/13~3/19, 2주=3/20~3/26, 3주=3/27~4/2, 4주=4/3~4/9
+/* 주차 막대 색상 — 채도 낮춘 딥톤 4색 */
+const WCOL=['#1976d2','#2e7d32','#9c27b0','#f57c00'];
+/* 차트 공통 옵션 */
+const TT={backgroundColor:'#ffffff',borderColor:'#e2e5ea',borderWidth:1,titleColor:'#1a1e2a',bodyColor:'#3a4050',padding:10};
+const SC={
+  x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}}},
+  y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}},beginAtZero:true}
+};
+
+/* ═══ 주간 데이터 (localStorage 우선) ═══ */
+const DEFAULT_WEEKS=['1주(3/13~3/19)','2주(3/20~3/26)','3주(3/27~4/2)','4주(4/3~4/9)','5주차','6주차'];
+const DEFAULT_PROJECTS=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[null,null,null,1,null,null]},
-  {cat:'집중관리',name:'아산자이그랜드파크2단지(충남)', values:[null,1,1,null,null,null]},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[null,1,1,null,null,null]},
   {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,null,3,null,null,null]},
   {cat:'집중관리',name:'원주자이센트로(강원)',          values:[null,4,2,2,null,null]},
-  // 일반
   {cat:'일반',name:'별내자이더스타이그제큐티브',        values:[null,null,null,null,null,null]},
   {cat:'일반',name:'은평자이더스타',                    values:[null,null,null,null,null,null]},
   {cat:'일반',name:'운암자이포레나퍼스티체',            values:[1,null,null,null,null,null]},
@@ -250,48 +378,182 @@ let projects=[
   {cat:'일반',name:'안양자이헤리티온(경기)',            values:[44,null,null,42,null,null]},
   {cat:'일반',name:'수지자이에디시온(경기)',            values:[7,10,15,13,null,null]},
   {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[106,53,44,33,null,null]},
-  // 공사비확보
   {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,null,2,null,null,null]},
   {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,null,1,null,null,null]},
   {cat:'공사비확보',name:'성성자이레이크파크',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',  values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',  values:[null,null,null,null,null,null]},
-  // 신규
   {cat:'신규',name:'구리역 하이니티 리버파크',         values:[null,null,null,null,null,null]},
 ];
 
-const v=x=>x||0;
+function loadSaved(){try{const s=localStorage.getItem('ctr_v2');if(s)return JSON.parse(s);}catch(e){}return null;}
+function saveSt(){try{localStorage.setItem('ctr_v2',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
+let sv=loadSaved();
+let weeks   =sv?sv.weeks   :JSON.parse(JSON.stringify(DEFAULT_WEEKS));
+let projects=sv?sv.projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
+let history =sv?sv.history :[];
+let dailyLog=sv?sv.dailyLog:[];  // [{date:'26/04/09', total:6, bycat:{집중관리:1,일반:5,...}}]
+
+/* ═══ 일간 데이터 ═══ */
+let dailyDate="'26/04/09";
+let dailyProjects=[
+  {cat:'집중관리',name:'음성자이센트럴시티(충북)',      supply:1505,prev:903, today:1},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       supply:1588,prev:1100,today:0},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',        supply:52,  prev:7,   today:0},
+  {cat:'집중관리',name:'원주자이센트로(강원)',          supply:970, prev:922, today:0},
+  {cat:'일반',name:'별내자이더스타이그제큐티브',        supply:604, prev:603, today:0},
+  {cat:'일반',name:'은평자이더스타',                    supply:227, prev:220, today:0},
+  {cat:'일반',name:'운암자이포레나퍼스티체',            supply:566, prev:565, today:0},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',          supply:842, prev:259, today:1},
+  {cat:'일반',name:'도룡자이라피크(대전)',              supply:299, prev:269, today:0},
+  {cat:'일반',name:'안양자이헤리티온(경기)',            supply:639, prev:595, today:0},
+  {cat:'일반',name:'수지자이에디시온(경기)',            supply:480, prev:299, today:1},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',        supply:1275,prev:1118,today:3},
+  {cat:'공사비확보',name:'대구역자이더스타(대구)',      supply:424, prev:423, today:0},
+  {cat:'공사비확보',name:'여주역자이헤리티지',          supply:769, prev:764, today:0},
+  {cat:'공사비확보',name:'순천그랜드파크자이',          supply:997, prev:988, today:0},
+  {cat:'공사비확보',name:'성성자이레이크파크',          supply:1104,prev:1058,today:0},
+  {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)', supply:797, prev:730, today:0},
+  {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)', supply:1238,prev:1202,today:0},
+  {cat:'신규',name:'구리역 하이니티 리버파크',         supply:505, prev:349, today:0},
+];
+
+/* ═══ 유틸 ═══ */
+const vv=x=>x||0;
 const fmt=n=>n===0?'-':n.toLocaleString();
-const ptot=p=>p.values.reduce((s,x)=>s+v(x),0);
+const fmtN=n=>n.toLocaleString();
+const ptot=p=>p.values.reduce((s,x)=>s+vv(x),0);
 const gtot=()=>projects.reduce((s,p)=>s+ptot(p),0);
-const wtots=()=>weeks.map((_,wi)=>projects.reduce((s,p)=>s+v(p.values[wi]),0));
+const wtots=()=>weeks.map((_,wi)=>projects.reduce((s,p)=>s+vv(p.values[wi]),0));
 const ctot=cat=>projects.filter(p=>p.cat===cat).reduce((s,p)=>s+ptot(p),0);
-const cwtots=cat=>weeks.map((_,wi)=>projects.filter(p=>p.cat===cat).reduce((s,p)=>s+v(p.values[wi]),0));
+const cwtots=cat=>weeks.map((_,wi)=>projects.filter(p=>p.cat===cat).reduce((s,p)=>s+vv(p.values[wi]),0));
 const awi=()=>{const wt=wtots();return weeks.map((_,i)=>i).filter(i=>wt[i]>0)};
+const dcum=p=>p.prev+p.today;
+const drate=p=>p.supply>0?((dcum(p)/p.supply)*100).toFixed(1):0;
+const dremain=p=>p.supply-dcum(p);
 
-let fLine='all',fBar='all',fTable='all';
-let lCI,clCI,dI,bI;
+/* ═══ 날짜 → 주차 ═══ */
+function parseDateStr(s){
+  const c=s.replace(/[^0-9\/]/g,''),pts=c.split('/');
+  if(pts.length!==3)return null;
+  return new Date(2000+parseInt(pts[0]),parseInt(pts[1])-1,parseInt(pts[2]));
+}
+function getMonday(d){
+  const day=d.getDay(),diff=day===0?-6:1-day,m=new Date(d);
+  m.setDate(d.getDate()+diff);m.setHours(0,0,0,0);return m;
+}
+function formatWeekLabel(mon){
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  return `${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;
+}
+function parseWeekStart(label){
+  const m=label.match(/(\d+)\/(\d+)~/);if(!m)return null;
+  return new Date(new Date().getFullYear(),parseInt(m[1])-1,parseInt(m[2]));
+}
+function getWeekIndex(dateStr){
+  const d=parseDateStr(dateStr);if(!d)return null;
+  const mon=getMonday(d);mon.setHours(0,0,0,0);
+  for(let i=0;i<4;i++){
+    const ws=parseWeekStart(weeks[i]);
+    if(ws){ws.setHours(0,0,0,0);if(ws.getTime()===mon.getTime())return{idx:i,mon,isNew:false};}
+  }
+  return{idx:-1,mon,isNew:true};
+}
 
-const TT={backgroundColor:'#1a2235',borderColor:'rgba(255,255,255,0.07)',borderWidth:1,titleColor:'#f1f5f9',bodyColor:'#94a3b8',padding:10};
-const SC={x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{size:11}},beginAtZero:true}};
+/* ═══ 일간 → 주간 자동반영 ═══ */
+function applyDailyAndUpdateWeekly(){
+  const dateStr=document.getElementById('dailyDateInput').value||dailyDate;
+  dailyDate=dateStr;
+  const result=getWeekIndex(dateStr);
+  if(!result){showToast('날짜 형식을 확인해주세요. 예) 26/04/09');return;}
+  const{idx,mon,isNew}=result;
+  const weekLabel=formatWeekLabel(mon);
+  let weekIdx=idx;
+  if(isNew){
+    const oldFirst=weeks[0];
+    weeks.shift();
+    weeks.splice(3,0,'임시');
+    weeks=weeks.slice(0,4).map((w,i)=>{
+      const r=w.match(/\(([^)]+)\)/);
+      return`${i+1}주(${r?r[1]:weekLabel})`;
+    }).concat(['5주차','6주차']);
+    weeks[3]=`4주(${weekLabel})`;
+    projects.forEach(p=>{p.values.shift();p.values.push(null);});
+    weekIdx=3;
+    history.unshift({date:dateStr,week:weeks[3],units:[],action:`새 주차 추가, 기존 "${oldFirst}" 제거`});
+  }
+  let updated=[];
+  dailyProjects.forEach(dp=>{
+    if(dp.today<=0)return;
+    const proj=projects.find(p=>p.name===dp.name);
+    if(proj){proj.values[weekIdx]=(proj.values[weekIdx]||0)+dp.today;updated.push(`${dp.name} +${dp.today}`);}
+  });
+  if(updated.length>0){
+    history.unshift({date:dateStr,week:weeks[weekIdx],units:updated,action:''});
+    showToast(`<span class="t-acc">✓ 주간 반영 완료</span>  ${weeks[weekIdx]} · ${updated.length}개 단지`);
+  } else {
+    showToast('금일 계약 없음 — 주간 데이터 변동 없습니다');
+  }
+  // dailyLog에 오늘 날짜 데이터 기록 (중복 날짜면 덮어쓰기)
+  const cleanDate=dateStr.replace(/[^0-9\/]/g,'');
+  const bycat={};
+  CATS.forEach(cat=>{bycat[cat]=dailyProjects.filter(p=>p.cat===cat).reduce((s,p)=>s+p.today,0);});
+  const todayTotal=dailyProjects.reduce((s,p)=>s+p.today,0);
+  const existIdx=dailyLog.findIndex(r=>r.date===cleanDate);
+  const logEntry={date:cleanDate,total:todayTotal,bycat};
+  if(existIdx>=0) dailyLog[existIdx]=logEntry;
+  else{
+    dailyLog.push(logEntry);
+    dailyLog.sort((a,b)=>a.date.localeCompare(b.date));
+  }
 
-function renderKPI(){
+  saveSt();renderHistory();renderAll();showTab('daily');
+}
+
+function resetWeekly(){
+  if(!confirm('주간 데이터를 초기화할까요? 이력도 삭제됩니다.'))return;
+  weeks=JSON.parse(JSON.stringify(DEFAULT_WEEKS));
+  projects=JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
+  history=[];dailyLog=[];saveSt();renderHistory();renderAll();
+  showToast('주간 데이터가 초기화되었습니다');
+}
+
+function renderHistory(){
+  const box=document.getElementById('historyBox');
+  if(!history.length){box.innerHTML='<p class="history-empty">아직 반영 이력이 없습니다.</p>';return;}
+  box.innerHTML=history.slice(0,20).map(h=>`<p>
+    <strong>${h.date}</strong> → ${h.week||''}
+    ${h.units&&h.units.length?'<span style="color:var(--muted2)"> '+h.units.join(', ')+'</span>':'<span style="color:var(--muted)"> '+h.action+'</span>'}
+  </p>`).join('');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.innerHTML=msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+/* ═══ 차트 인스턴스 ═══ */
+let wLCI,wCLCI,wDI,wBI,dCatBI,dRateCI,dRemainBI,dTrendCI;
+let wFLine='all',wFBar='all',wFTable='all',dFRemain='all',dFTable='all',dFTrend='all';
+
+/* ═══ 주간 KPI ═══ */
+function renderWKPI(){
   const wt=wtots(),gt=gtot(),ai=awi();
   const li=ai.length?ai[ai.length-1]:-1,pi=ai.length>1?ai[ai.length-2]:-1;
   const lv=li>=0?wt[li]:0,pv=pi>=0?wt[pi]:0;
   const pct=pv>0?Math.round((lv-pv)/pv*100):null;
   const top=[...projects].sort((a,b)=>ptot(b)-ptot(a))[0];
   const kpis=[
-    {icon:'🏠',c:'#4f8ef7',b:'rgba(79,142,247,0.12)',label:'총 누적 계약',val:gt.toLocaleString(),unit:'세대',sub:`${projects.length}개 단지`,badge:null},
-    {icon:'📈',c:'#10b981',b:'rgba(16,185,129,0.12)',label:'최근 주차 계약',val:lv.toLocaleString(),unit:'세대',sub:li>=0?weeks[li]:'-',badge:pct!=null?{cls:pct>=0?'bu':'bd',t:(pct>=0?'▲':'▼')+Math.abs(pct)+'%'}:null},
-    {icon:'🏆',c:'#f59e0b',b:'rgba(245,158,11,0.12)',label:'최다 계약 단지',val:top?ptot(top).toLocaleString():'-',unit:'세대',sub:top?top.name.replace(/\(.*\)/,''):'-',badge:top&&gt>0?{cls:'bn',t:Math.round(ptot(top)/gt*100)+'%'}:null},
-    {icon:'📅',c:'#7c3aed',b:'rgba(124,58,237,0.12)',label:'집계 주차',val:ai.length,unit:'주',sub:ai.length?`${weeks[ai[0]]} ~ ${weeks[ai[ai.length-1]]}`:'-',badge:null},
-    {icon:'📋',c:'#06b6d4',b:'rgba(6,182,212,0.12)',label:'활성 단지',val:projects.filter(p=>ptot(p)>0).length,unit:'개',sub:`전체 ${projects.length}개 중`,badge:null},
+    {icon:'🏠',c:'#1976d2',label:'4주 누계 계약',val:gt.toLocaleString(),unit:'세대',sub:`${projects.length}개 단지`},
+    {icon:'📈',c:'#2e7d32',label:'최근 주차 계약',val:lv.toLocaleString(),unit:'세대',sub:li>=0?weeks[li]:'-',badge:pct!=null?{cls:pct>=0?'bu':'bd',t:(pct>=0?'▲':'▼')+Math.abs(pct)+'%'}:null},
+    {icon:'🏆',c:'#f57c00',label:'최다 계약 단지',val:top?ptot(top).toLocaleString():'-',unit:'세대',sub:top?top.name.replace(/\(.*\)/,''):'-',badge:top&&gt>0?{cls:'bn',t:Math.round(ptot(top)/gt*100)+'%'}:null},
+    {icon:'📅',c:'#9c27b0',label:'집계 주차',val:ai.length,unit:'주',sub:ai.length?`${weeks[ai[0]]} ~ ${weeks[ai[ai.length-1]]}`:'-'},
+    {icon:'📋',c:'#0097a7',label:'활성 단지',val:projects.filter(p=>ptot(p)>0).length,unit:'개',sub:`전체 ${projects.length}개 중`},
   ];
-  document.getElementById('kpiGrid').innerHTML=kpis.map((k,i)=>`
-    <div class="kpi-card" style="--kc:${k.c};--kb:${k.b};animation-delay:${i*.05+.05}s">
-      <div class="kpi-icon" style="background:${k.b}">${k.icon}</div>
+  document.getElementById('wKpiGrid').innerHTML=kpis.map((k,i)=>`
+    <div class="kpi-card" style="--kc:${k.c};animation-delay:${i*.04+.04}s">
+      <div class="kpi-icon">${k.icon}</div>
       <div class="kpi-label">${k.label}</div>
       <div class="kpi-value">${k.val}<span class="kpi-unit">${k.unit}</span></div>
       ${k.sub?`<div class="kpi-sub">${k.sub}</div>`:''}
@@ -299,158 +561,285 @@ function renderKPI(){
     </div>`).join('');
 }
 
-function renderCatRow(){
+/* ═══ 분류 요약 카드 ═══ */
+function renderWCatRow(){
   const gt=gtot();
-  document.getElementById('catRow').innerHTML=CATS.map(cat=>{
+  document.getElementById('wCatRow').innerHTML=CATS.map(cat=>{
     const m=CM[cat],tot=ctot(cat),pct=gt>0?Math.round(tot/gt*100):0;
-    return `<div class="cat-card">
-      <div style="flex:0 0 auto"><span class="cb ${m.cls}">${m.icon} ${cat}</span></div>
+    const dps=dailyProjects.filter(p=>p.cat===cat);
+    const supply=dps.reduce((s,p)=>s+p.supply,0);
+    const cum=dps.reduce((s,p)=>s+dcum(p),0);
+    const rate=supply>0?(cum/supply*100).toFixed(1):'-';
+    const remain=dps.reduce((s,p)=>s+dremain(p),0);
+    return `<div class="cat-card" style="--cat-c:${m.catC}">
+      <div style="flex:0 0 auto"><span class="cb ${m.cls}">${cat}</span></div>
       <div style="flex:1;min-width:0">
-        <div class="cat-val" style="color:${m.color}">${tot.toLocaleString()}<span style="font-size:.85rem;font-weight:500;color:var(--muted2);margin-left:3px">세대</span></div>
+        <div class="cat-val" style="color:${m.color}">${tot.toLocaleString()}<span style="font-size:.78rem;font-weight:500;color:var(--muted);margin-left:3px">세대</span></div>
         <div class="cat-bar-bg"><div class="cat-bar-fill" style="width:${pct}%;background:${m.color}"></div></div>
-        <div style="font-size:.68rem;color:var(--muted);margin-top:3px">${pct}% of total</div>
+        <div class="cat-meta">공급 <strong>${supply.toLocaleString()}</strong> · 계약율 <strong>${rate}%</strong> · 잔여 <strong>${remain.toLocaleString()}</strong></div>
       </div></div>`;
   }).join('');
 }
 
-function renderLine(){
+/* ═══ 주간 차트 ═══ */
+function renderWLine(){
   const ai=awi(),al=ai.map(i=>weeks[i]),wt=wtots();
-  let datasets;
-  if(fLine==='all'){
-    datasets=[{label:'전체',data:ai.map(i=>wt[i]),borderColor:'#4f8ef7',backgroundColor:'rgba(79,142,247,0.08)',pointBackgroundColor:'#4f8ef7',pointBorderColor:'#0b0f1a',pointBorderWidth:2,pointRadius:6,pointHoverRadius:8,tension:.4,fill:true}];
-  } else {
-    const m=CM[fLine],cw=cwtots(fLine);
-    datasets=[{label:fLine,data:ai.map(i=>cw[i]),borderColor:m.color,backgroundColor:m.bg,pointBackgroundColor:m.color,pointBorderColor:'#0b0f1a',pointBorderWidth:2,pointRadius:6,pointHoverRadius:8,tension:.4,fill:true}];
-  }
-  if(lCI) lCI.destroy();
-  lCI=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:al,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT},scales:SC}});
+  let ds;
+  if(wFLine==='all') ds=[{label:'전체',data:ai.map(i=>wt[i]),borderColor:'#1976d2',backgroundColor:'rgba(25,118,210,0.07)',pointBackgroundColor:'#1976d2',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,tension:.35,fill:true}];
+  else{const m=CM[wFLine],cw=cwtots(wFLine);ds=[{label:wFLine,data:ai.map(i=>cw[i]),borderColor:m.color,backgroundColor:m.bg+'99',pointBackgroundColor:m.color,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,tension:.35,fill:true}];}
+  if(wLCI)wLCI.destroy();
+  wLCI=new Chart(document.getElementById('wLineChart'),{type:'line',data:{labels:al,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT},scales:SC}});
 }
 
-function renderCatLine(){
+function renderWCatLine(){
   const ai=awi(),al=ai.map(i=>weeks[i]);
-  const datasets=CATS.map(cat=>{
-    const m=CM[cat],cw=cwtots(cat);
-    return {label:cat,data:ai.map(i=>cw[i]),borderColor:m.color,backgroundColor:m.bg,pointBackgroundColor:m.color,pointBorderColor:'#0b0f1a',pointBorderWidth:2,pointRadius:5,pointHoverRadius:7,tension:.4,fill:false};
-  });
-  if(clCI) clCI.destroy();
-  clCI=new Chart(document.getElementById('catLineChart'),{type:'line',data:{labels:al,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},tooltip:TT},scales:SC}});
+  const ds=CATS.map(cat=>{const m=CM[cat],cw=cwtots(cat);return{label:cat,data:ai.map(i=>cw[i]),borderColor:m.color,backgroundColor:m.bg,pointBackgroundColor:m.color,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:.35,fill:false};});
+  if(wCLCI)wCLCI.destroy();
+  wCLCI=new Chart(document.getElementById('wCatLineChart'),{type:'line',data:{labels:al,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},tooltip:TT},scales:SC}});
 }
 
-function renderDoughnut(){
-  const gt=gtot(),data=CATS.map(c=>ctot(c)),colors=CATS.map(c=>CM[c].color);
-  if(dI) dI.destroy();
-  dI=new Chart(document.getElementById('doughnutChart'),{type:'doughnut',data:{labels:CATS,datasets:[{data,backgroundColor:colors,borderColor:'#111827',borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11,family:"'Pretendard'"},padding:14,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toLocaleString()}세대 (${gt>0?Math.round(ctx.raw/gt*100):0}%)`}}}}});
+function renderWDoughnut(){
+  const gt=gtot();
+  if(wDI)wDI.destroy();
+  wDI=new Chart(document.getElementById('wDoughnutChart'),{type:'doughnut',
+    data:{labels:CATS,datasets:[{data:CATS.map(c=>ctot(c)),backgroundColor:CATS.map(c=>CM[c].color),borderColor:'#ffffff',borderWidth:3}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{
+      legend:{position:'right',labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},
+      tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toLocaleString()}세대 (${gt>0?Math.round(ctx.raw/gt*100):0}%)`}}
+    }}
+  });
 }
 
-function renderBar(){
-  const filtered=fBar==='all'?projects:projects.filter(p=>p.cat===fBar);
-  // 분류 순서 유지, 분류 내에서 누적 합계 내림차순
-  const sorted=[...filtered].sort((a,b)=>{
-    const ci=CATS.indexOf(a.cat)-CATS.indexOf(b.cat);
-    return ci!==0?ci:ptot(b)-ptot(a);
-  });
-  const labels=sorted.map(p=>p.name.replace(/\(.*\)/,''));
+function renderWBar(){
+  const filtered=wFBar==='all'?projects:projects.filter(p=>p.cat===wFBar);
+  const sorted=[...filtered].sort((a,b)=>{const ci=CATS.indexOf(a.cat)-CATS.indexOf(b.cat);return ci||ptot(b)-ptot(a);});
   const ai=awi();
-  const wColors=['#4f8ef7','#7c3aed','#10b981','#f59e0b','#ef4444','#06b6d4'];
-  // 주차별 dataset (활성 주차만)
-  const datasets=ai.map((wi,li)=>({
-    label:weeks[wi],
-    data:sorted.map(p=>v(p.values[wi])),
-    backgroundColor:wColors[li]||'#64748b',
-    borderRadius:li===ai.length-1?4:0,
-    borderSkipped:false,
-    barPercentage:.7,
-    stack:'s',
-  }));
-  const bH=Math.max(300,sorted.length*38+80);
-  document.getElementById('barWrap').style.height=bH+'px';
-  if(bI) bI.destroy();
-  // 범례 HTML
-  const legendHtml=ai.map((wi,li)=>
-    `<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94a3b8">
-      <span style="width:8px;height:8px;border-radius:2px;background:${wColors[li]};display:inline-block"></span>${weeks[wi]}
+  const ds=ai.map((wi,li)=>({label:weeks[wi],data:sorted.map(p=>vv(p.values[wi])),backgroundColor:WCOL[li]||'#7a8294',borderRadius:li===ai.length-1?3:0,borderSkipped:false,barPercentage:.68,stack:'s'}));
+  const bH=Math.max(280,sorted.length*36+70);
+  document.getElementById('wBarWrap').style.height=bH+'px';
+  document.getElementById('wBarLegend').innerHTML=ai.map((wi,li)=>
+    `<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted2);font-family:'Pretendard',sans-serif">
+      <span style="width:8px;height:8px;border-radius:2px;background:${WCOL[li]};display:inline-block"></span>${weeks[wi]}
     </span>`).join('');
-  document.getElementById('barLegend').innerHTML=legendHtml;
-  bI=new Chart(document.getElementById('barChart'),{type:'bar',
-    data:{labels,datasets},
+  if(wBI)wBI.destroy();
+  wBI=new Chart(document.getElementById('wBarChart'),{type:'bar',data:{labels:sorted.map(p=>p.name.replace(/\(.*\)/,'')),datasets:ds},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{
-        title:items=>{const p=sorted[items[0].dataIndex];return `${p.name} [${p.cat}]`},
-        label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`
-      }}},
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{title:it=>`${sorted[it[0].dataIndex].name} [${sorted[it[0].dataIndex].cat}]`,label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}}},
+      scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}}},y:{stacked:true,grid:{display:false},ticks:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},autoSkip:false}}}
+    }
+  });
+}
+
+function renderWTable(){
+  const ai=awi(),al=ai.map(i=>weeks[i]),wt=wtots(),gt=gtot();
+  const filtered=wFTable==='all'?projects:projects.filter(p=>p.cat===wFTable);
+  document.getElementById('wTHead').innerHTML=`<th>단지명</th><th>분류</th>`+al.map(w=>`<th>${w}</th>`).join('')+`<th>합계</th><th>비중</th>`;
+  let rows='';
+  (wFTable==='all'?CATS:[wFTable]).forEach(cat=>{
+    const ps=filtered.filter(p=>p.cat===cat);if(!ps.length)return;
+    const m=CM[cat],ctotv=ps.reduce((s,p)=>s+ptot(p),0);
+    if(wFTable==='all'){
+      const dps=dailyProjects.filter(p=>p.cat===cat);
+      const sup=dps.reduce((s,p)=>s+p.supply,0),cum=dps.reduce((s,p)=>s+dcum(p),0),rem=dps.reduce((s,p)=>s+dremain(p),0);
+      const rate=sup>0?(cum/sup*100).toFixed(1):'-';
+      rows+=`<tr class="sec-row"><td colspan="${3+al.length}">
+        <span class="cb ${m.cls}">${cat}</span>
+        <span class="meta-nums">4주계약 <strong>${ctotv.toLocaleString()}</strong> &nbsp;·&nbsp; 공급 <strong>${sup.toLocaleString()}</strong> &nbsp;·&nbsp; 계약율 <strong>${rate}%</strong> &nbsp;·&nbsp; 잔여 <strong>${rem.toLocaleString()}</strong></span>
+      </td></tr>`;
+    }
+    ps.sort((a,b)=>ptot(b)-ptot(a)).forEach(p=>{
+      const tot=ptot(p),pct=gt>0?Math.round(tot/gt*100):0;
+      rows+=`<tr><td>${p.name}</td><td><span class="cb ${m.cls}">${cat}</span></td>${ai.map(i=>`<td>${fmt(vv(p.values[i]))}</td>`).join('')}<td class="tc">${fmt(tot)}</td>
+        <td><span style="font-size:.7rem;color:var(--muted2)">${pct}%</span><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%;background:${m.color}"></div></div></td></tr>`;
+    });
+  });
+  document.getElementById('wTBody').innerHTML=rows;
+  document.getElementById('wTFoot').innerHTML=`<td>합 계</td><td></td>`+ai.map(i=>`<td>${wt[i].toLocaleString()}</td>`).join('')+`<td>${gtot().toLocaleString()}</td><td>100%</td>`;
+}
+
+/* ═══ 일간 렌더 ═══ */
+function renderDKPI(){
+  const tt=dailyProjects.reduce((s,p)=>s+p.today,0);
+  const ts=dailyProjects.reduce((s,p)=>s+p.supply,0);
+  const tc=dailyProjects.reduce((s,p)=>s+dcum(p),0);
+  const tr=dailyProjects.reduce((s,p)=>s+dremain(p),0);
+  const kpis=[
+    {icon:'📌',c:'#e53935',label:'금일 계약',val:tt,unit:'세대',sub:dailyDate+' 기준'},
+    {icon:'📊',c:'#1976d2',label:'누계 계약',val:fmtN(tc),unit:'세대',sub:`공급 ${fmtN(ts)}세대 중`},
+    {icon:'📉',c:'#2e7d32',label:'전체 계약율',val:(tc/ts*100).toFixed(1),unit:'%',sub:`잔여 ${fmtN(tr)}세대`},
+    {icon:'🏢',c:'#9c27b0',label:'공급 규모',val:fmtN(ts),unit:'세대',sub:`${dailyProjects.length}개 단지`},
+    {icon:'✅',c:'#f57c00',label:'금일 계약 단지',val:dailyProjects.filter(p=>p.today>0).length,unit:'개',sub:`전체 ${dailyProjects.length}개 중`},
+  ];
+  document.getElementById('dKpiGrid').innerHTML=kpis.map((k,i)=>`
+    <div class="kpi-card" style="--kc:${k.c};animation-delay:${i*.04+.04}s">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.val}<span class="kpi-unit">${k.unit}</span></div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+function renderDCatBar(){
+  const data=CATS.map(cat=>dailyProjects.filter(p=>p.cat===cat).reduce((s,p)=>s+p.today,0));
+  if(dCatBI)dCatBI.destroy();
+  dCatBI=new Chart(document.getElementById('dCatBarChart'),{type:'bar',
+    data:{labels:CATS,datasets:[{data,backgroundColor:CATS.map(c=>CM[c].color),borderRadius:4,barPercentage:.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT},scales:SC}});
+}
+
+function renderDRateChart(){
+  const data=CATS.map(cat=>{const ps=dailyProjects.filter(p=>p.cat===cat),s=ps.reduce((a,p)=>a+p.supply,0),c=ps.reduce((a,p)=>a+dcum(p),0);return s>0?parseFloat((c/s*100).toFixed(1)):0;});
+  if(dRateCI)dRateCI.destroy();
+  dRateCI=new Chart(document.getElementById('dRateChart'),{type:'bar',
+    data:{labels:CATS,datasets:[{data,backgroundColor:CATS.map(c=>CM[c].color),borderRadius:4,barPercentage:.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.raw}%`}}},
+      scales:{...SC,y:{...SC.y,max:100,ticks:{...SC.y.ticks,callback:v=>v+'%'}}}}});
+}
+
+function renderDTrend(){
+  // dailyLog: [{date, total, bycat:{집중관리:n, 일반:n, ...}}]
+  if(!dailyLog.length){
+    if(dTrendCI){dTrendCI.destroy();dTrendCI=null;}
+    document.getElementById('dTrendChart').getContext('2d').clearRect(0,0,9999,9999);
+    return;
+  }
+  // 표시 기간 필터 (최근 N일)
+  const n=parseInt(document.getElementById('trendDays')?.value||30);
+  const log=dailyLog.slice(-n);
+  const labels=log.map(r=>r.date);
+
+  let datasets;
+  if(dFTrend==='all'){
+    // 전체 합계 + 분류별 4개 라인
+    datasets=[
+      {label:'전체',data:log.map(r=>r.total),borderColor:'#1976d2',backgroundColor:'rgba(25,118,210,0.07)',pointBackgroundColor:'#1976d2',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:.3,fill:true,borderWidth:2.5},
+      ...CATS.map(cat=>({
+        label:cat,data:log.map(r=>r.bycat[cat]||0),
+        borderColor:CM[cat].color,backgroundColor:'transparent',
+        pointBackgroundColor:CM[cat].color,pointBorderColor:'#fff',pointBorderWidth:1,
+        pointRadius:3,tension:.3,fill:false,borderWidth:1.5,
+        borderDash: cat==='집중관리'?[]:[4,3],
+      }))
+    ];
+  } else {
+    const m=CM[dFTrend];
+    datasets=[{
+      label:dFTrend,data:log.map(r=>r.bycat[dFTrend]||0),
+      borderColor:m.color,backgroundColor:m.bg+'55',
+      pointBackgroundColor:m.color,pointBorderColor:'#fff',pointBorderWidth:2,
+      pointRadius:4,tension:.3,fill:true,borderWidth:2.5,
+    }];
+  }
+
+  if(dTrendCI)dTrendCI.destroy();
+  dTrendCI=new Chart(document.getElementById('dTrendChart'),{
+    type:'line',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top',labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:14,boxWidth:10,usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}}
+      },
       scales:{
-        x:{stacked:true,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#64748b',font:{size:11}}},
-        y:{stacked:true,grid:{display:false},ticks:{color:'#94a3b8',font:{size:11},autoSkip:false}}
+        x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"},maxRotation:30,autoSkip:true,maxTicksLimit:20}},
+        y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}},beginAtZero:true,title:{display:true,text:'일별 계약 (세대)',color:'#9aa0b0',font:{size:10}}}
       }
     }
   });
 }
 
-function renderTable(){
-  const ai=awi(),al=ai.map(i=>weeks[i]),wt=wtots(),gt=gtot();
-  const filtered=fTable==='all'?projects:projects.filter(p=>p.cat===fTable);
-  document.getElementById('tHead').innerHTML=`<th>단지명</th><th>분류</th>`+al.map(w=>`<th>${w}</th>`).join('')+`<th>합계</th><th>비중</th>`;
-  let rows='';
-  const cats=fTable==='all'?CATS:[fTable];
-  cats.forEach(cat=>{
-    const ps=filtered.filter(p=>p.cat===cat);
-    if(!ps.length) return;
-    const m=CM[cat],ctotv=ps.reduce((s,p)=>s+ptot(p),0);
-    if(fTable==='all') rows+=`<tr class="sec-row"><td colspan="${3+al.length}"><span class="cb ${m.cls}">${m.icon} ${cat}</span><span style="margin-left:8px;font-family:'DM Mono',monospace">${ctotv.toLocaleString()}세대</span></td></tr>`;
-    ps.sort((a,b)=>ptot(b)-ptot(a)).forEach(p=>{
-      const tot=ptot(p),pct=gt>0?Math.round(tot/gt*100):0;
-      rows+=`<tr><td>${p.name}</td><td><span class="cb ${m.cls}">${cat}</span></td>${ai.map(i=>`<td>${fmt(v(p.values[i]))}</td>`).join('')}<td class="tc">${fmt(tot)}</td><td><span style="font-size:.72rem;color:var(--muted2)">${pct}%</span><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div></td></tr>`;
+function renderDRemain(){
+  const filtered=dFRemain==='all'?dailyProjects:dailyProjects.filter(p=>p.cat===dFRemain);
+  const sorted=[...filtered].sort((a,b)=>{const ci=CATS.indexOf(a.cat)-CATS.indexOf(b.cat);return ci||b.supply-a.supply;});
+  document.getElementById('dRemainWrap').style.height=Math.max(260,sorted.length*38+70)+'px';
+  if(dRemainBI)dRemainBI.destroy();
+  dRemainBI=new Chart(document.getElementById('dRemainChart'),{type:'bar',
+    data:{labels:sorted.map(p=>p.name.replace(/\(.*\)/,'')),datasets:[
+      {label:'누계 계약',data:sorted.map(p=>dcum(p)),backgroundColor:sorted.map(p=>CM[p.cat].color),borderRadius:0,borderSkipped:false,barPercentage:.65,stack:'s'},
+      {label:'잔여',data:sorted.map(p=>dremain(p)),backgroundColor:'rgba(0,0,0,0.06)',borderRadius:3,borderSkipped:false,barPercentage:.65,stack:'s'},
+    ]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{...TT,callbacks:{title:it=>`${sorted[it[0].dataIndex].name}`,label:ctx=>ctx.datasetIndex===0?` 누계 계약: ${ctx.raw.toLocaleString()}세대`:` 잔여: ${ctx.raw.toLocaleString()}세대`}}},
+      scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}}},y:{stacked:true,grid:{display:false},ticks:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},autoSkip:false}}}
+    }
+  });
+}
+
+function renderDTable(){
+  const filtered=dFTable==='all'?dailyProjects:dailyProjects.filter(p=>p.cat===dFTable);
+  document.getElementById('dTableDate').textContent=dailyDate+' 기준';
+  document.getElementById('dTHead').innerHTML=`<th>단지명</th><th>분류</th><th>공급</th><th>전일누계</th><th>금일</th><th>누계</th><th>계약율</th><th>잔여</th>`;
+  let rows='',ts=0,tprev=0,ttoday=0,tcum=0,tremain=0;
+  (dFTable==='all'?CATS:[dFTable]).forEach(cat=>{
+    const ps=filtered.filter(p=>p.cat===cat);if(!ps.length)return;
+    const m=CM[cat];
+    const cs=ps.reduce((a,p)=>a+p.supply,0),ct=ps.reduce((a,p)=>a+p.today,0),cc=ps.reduce((a,p)=>a+dcum(p),0),cr=ps.reduce((a,p)=>a+dremain(p),0);
+    if(dFTable==='all') rows+=`<tr class="sec-row"><td colspan="8">
+      <span class="cb ${m.cls}">${cat}</span>
+      <span class="meta-nums">공급 <strong>${cs.toLocaleString()}</strong> &nbsp;·&nbsp; 계약율 <strong>${cs>0?(cc/cs*100).toFixed(1):0}%</strong> &nbsp;·&nbsp; 잔여 <strong>${cr.toLocaleString()}</strong></span>
+    </td></tr>`;
+    ps.forEach(p=>{
+      const cum=dcum(p),rate=drate(p),rem=dremain(p),rn=parseFloat(rate);
+      const rc=rn>=95?'tc-warn':rn>=80?'tc':'';
+      rows+=`<tr><td>${p.name}</td><td><span class="cb ${m.cls}">${cat}</span></td>
+        <td>${fmtN(p.supply)}</td><td>${fmtN(p.prev)}</td>
+        <td class="${p.today>0?'today-col':''}">${p.today>0?'+'+p.today:'-'}</td>
+        <td>${fmtN(cum)}</td>
+        <td class="${rc}"><span>${rate}%</span><div class="pct-bar"><div class="pct-fill" style="width:${Math.min(rn,100)}%;background:${m.color}"></div></div></td>
+        <td style="color:${rem<=10?'var(--cj)':rem<=50?'var(--cs)':'var(--muted2)'}">${fmtN(rem)}</td>
+      </tr>`;
+      ts+=p.supply;tprev+=p.prev;ttoday+=p.today;tcum+=cum;tremain+=rem;
     });
   });
-  document.getElementById('tBody').innerHTML=rows;
-  document.getElementById('tFoot').innerHTML=`<td>합 계</td><td></td>`+ai.map(i=>`<td>${wt[i].toLocaleString()}</td>`).join('')+`<td>${gt.toLocaleString()}</td><td>100%</td>`;
+  document.getElementById('dTBody').innerHTML=rows;
+  document.getElementById('dTFoot').innerHTML=`<td>합 계</td><td></td><td>${fmtN(ts)}</td><td>${fmtN(tprev)}</td><td class="today-col">${ttoday>0?'+'+ttoday:'-'}</td><td>${fmtN(tcum)}</td><td>${ts>0?(tcum/ts*100).toFixed(1):0}%</td><td>${fmtN(tremain)}</td>`;
 }
 
-function setF(type,val,el){
-  if(type==='line') fLine=val;
-  else if(type==='bar') fBar=val;
-  else fTable=val;
-  el.closest('.filter-bar').querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  if(type==='line') renderLine();
-  else if(type==='bar') renderBar();
-  else renderTable();
+/* ═══ 필터 ═══ */
+function setWF(t,v,el){if(t==='line')wFLine=v;else if(t==='bar')wFBar=v;else wFTable=v;el.closest('.filter-bar').querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));el.classList.add('active');if(t==='line')renderWLine();else if(t==='bar')renderWBar();else renderWTable();}
+function setDF(t,v,el){
+  if(t==='remain')dFRemain=v;
+  else if(t==='trend')dFTrend=v;
+  else dFTable=v;
+  el.closest('.filter-bar').querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  if(t==='remain')renderDRemain();
+  else if(t==='trend')renderDTrend();
+  else renderDTable();
 }
 
-function renderInputForm(){
-  const colLabels=['단지명','분류',...weeks,''];
-  const hdr=`<div class="ih-row">${colLabels.map((l,i)=>`<div class="icl"${i===colLabels.length-1?' style="width:28px"':''}>${l}</div>`).join('')}</div>`;
-  let html='';
-  CATS.forEach(cat=>{
-    const m=CM[cat],ps=projects.map((p,i)=>({p,i})).filter(({p})=>p.cat===cat);
-    html+=`<div class="input-section"><div class="ist ${m.ist}">${m.icon} ${cat}</div>${hdr}
-      ${ps.map(({p,i})=>`<div class="ir">
-        <input class="if_ nf" placeholder="단지명" value="${p.name}" oninput="projects[${i}].name=this.value">
-        <select class="if_" onchange="projects[${i}].cat=this.value;renderInputForm()">
-          ${CATS.map(c=>`<option value="${c}"${c===p.cat?' selected':''}>${c}</option>`).join('')}
-        </select>
-        ${p.values.map((val,wi)=>`<input class="if_" type="number" min="0" placeholder="-" value="${val!=null?val:''}" oninput="projects[${i}].values[${wi}]=this.value===''?null:parseInt(this.value)||0">`).join('')}
-        <button class="db" onclick="removeRow(${i})">×</button>
-      </div>`).join('')}
-      <button class="ab" onclick="addRow('${cat}')">+ ${cat} 단지 추가</button>
-    </div>`;
-  });
-  document.getElementById('inputBody').innerHTML=html;
+/* ═══ 입력 폼 ═══ */
+function renderDInputForm(){
+  document.getElementById('dailyDateInput').value=dailyDate;
+  document.getElementById('dInputGrid').innerHTML=dailyProjects.map((p,i)=>`
+    <div class="daily-input-grid">
+      <input class="if_ nf" placeholder="단지명" value="${p.name}" oninput="dailyProjects[${i}].name=this.value">
+      <select class="if_" onchange="dailyProjects[${i}].cat=this.value">
+        ${CATS.map(c=>`<option value="${c}"${c===p.cat?' selected':''}>${c}</option>`).join('')}
+      </select>
+      <input class="if_" type="number" min="0" placeholder="공급" value="${p.supply||''}" oninput="dailyProjects[${i}].supply=parseInt(this.value)||0">
+      <input class="if_" type="number" min="0" placeholder="전일누계" value="${p.prev||''}" oninput="dailyProjects[${i}].prev=parseInt(this.value)||0">
+      <input class="if_" type="number" min="0" placeholder="금일" value="${p.today||''}" oninput="dailyProjects[${i}].today=parseInt(this.value)||0">
+      <button class="db" onclick="removeDRow(${i})">×</button>
+    </div>`).join('');
 }
+function addDailyRow(){dailyProjects.push({cat:'일반',name:'',supply:0,prev:0,today:0});renderDInputForm();}
+function removeDRow(i){if(dailyProjects.length<=1)return;dailyProjects.splice(i,1);renderDInputForm();}
 
-function addRow(cat){projects.push({cat,name:'',values:new Array(weeks.length).fill(null)});renderInputForm();}
-function removeRow(idx){if(projects.length<=1)return alert('최소 1개 단지가 필요합니다.');projects.splice(idx,1);renderInputForm();}
-function applyData(){renderAll();showTab('dashboard');}
-
+/* ═══ 탭 ═══ */
 function showTab(id){
-  ['dashboard','data'].forEach(t=>{
+  ['daily','weekly','data'].forEach(t=>{
     document.getElementById('tab-'+t).classList.toggle('active',t===id);
     document.getElementById('content-'+t).classList.toggle('active',t===id);
   });
-  if(id==='data') renderInputForm();
+  if(id==='data'){renderDInputForm();renderHistory();}
 }
 
-function renderAll(){renderKPI();renderCatRow();renderLine();renderCatLine();renderDoughnut();renderBar();renderTable();}
+function renderWeekly(){renderWKPI();renderWCatRow();renderWLine();renderWCatLine();renderWDoughnut();renderWBar();renderWTable();}
+function renderDaily(){renderDKPI();renderDCatBar();renderDRateChart();renderDTrend();renderDRemain();renderDTable();}
+function renderAll(){renderWeekly();renderDaily();}
 renderAll();
 </script>
 </body>
