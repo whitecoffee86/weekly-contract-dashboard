@@ -6,6 +6,7 @@
 <title>계약 트랜드 대시보드</title>
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root{
     --bg:#f5f6f8;
@@ -19,18 +20,18 @@
     --muted:#7a8294;
     --muted2:#9aa0b0;
 
-    --cj:#e53935;   /* 집중관리: 비비드 레드 */
-    --ci:#1976d2;   /* 일반: 비비드 블루 */
-    --cg:#2e7d32;   /* 공사비확보: 비비드 그린 */
-    --cs:#f57c00;   /* 신규: 비비드 오렌지 */
+    --cj:#c0392b;
+    --ci:#1565c0;
+    --cg:#276221;
+    --cs:#d35400;
 
-    --cj-bg:#ffeaea;
-    --ci-bg:#e3f0fc;
-    --cg-bg:#e6f4e7;
-    --cs-bg:#fff3e0;
+    --cj-bg:#fdecea;
+    --ci-bg:#e8f0fb;
+    --cg-bg:#e8f5e9;
+    --cs-bg:#fef0e7;
 
-    --accent:#1976d2;
-    --accent-light:#e3f0fc;
+    --accent:#1565c0;
+    --accent-light:#e8f0fb;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -350,14 +351,16 @@
 <script>
 /* ═══ 상수 ═══ */
 const CATS=['집중관리','일반','공사비확보','신규'];
+// datalabels 플러그인 전역 등록
+Chart.register(ChartDataLabels);
 const CM={
-  '집중관리':{color:'#e53935',bg:'#ffeaea',cls:'cj',catC:'#e53935'},
-  '일반':    {color:'#1976d2',bg:'#e3f0fc',cls:'ci',catC:'#1976d2'},
-  '공사비확보':{color:'#2e7d32',bg:'#e6f4e7',cls:'cg',catC:'#2e7d32'},
-  '신규':    {color:'#f57c00',bg:'#fff3e0',cls:'cs',catC:'#f57c00'},
+  '집중관리':{color:'#c0392b',bg:'#fdecea',cls:'cj',catC:'#c0392b'},
+  '일반':    {color:'#1565c0',bg:'#e8f0fb',cls:'ci',catC:'#1565c0'},
+  '공사비확보':{color:'#276221',bg:'#e8f5e9',cls:'cg',catC:'#276221'},
+  '신규':    {color:'#d35400',bg:'#fef0e7',cls:'cs',catC:'#d35400'},
 };
 /* 주차 막대 색상 — 채도 낮춘 딥톤 4색 */
-const WCOL=['#1976d2','#2e7d32','#9c27b0','#f57c00'];
+const WCOL=['#1565c0','#276221','#7b1fa2','#d35400'];
 /* 차트 공통 옵션 */
 const TT={backgroundColor:'#ffffff',borderColor:'#e2e5ea',borderWidth:1,titleColor:'#1a1e2a',bodyColor:'#3a4050',padding:10};
 const SC={
@@ -366,23 +369,23 @@ const SC={
 };
 
 /* ═══ 주간 데이터 (localStorage 우선) ═══ */
-const DEFAULT_WEEKS=['1주(3/13~3/19)','2주(3/20~3/26)','3주(3/27~4/2)','4주(4/3~4/9)','5주차','6주차'];
+const DEFAULT_WEEKS=['1주(3/20~3/26)','2주(3/27~4/2)','3주(4/3~4/9)','4주(4/10~4/16)','5주차','6주차'];
 const DEFAULT_PROJECTS=[
-  {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[null,null,null,1,null,null]},
-  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[null,1,1,null,null,null]},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,null,3,null,null,null]},
-  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[null,4,2,2,null,null]},
+  {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[null,null,1,null,null,null]},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[1,1,null,null,null,null]},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,3,null,1,null,null]},
+  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[4,2,2,null,null,null]},
   {cat:'일반',name:'별내자이더스타이그제큐티브',        values:[null,null,null,null,null,null]},
   {cat:'일반',name:'은평자이더스타',                    values:[null,null,null,null,null,null]},
-  {cat:'일반',name:'운암자이포레나퍼스티체',            values:[1,null,null,null,null,null]},
-  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[2,2,6,3,null,null]},
-  {cat:'일반',name:'도룡자이라피크(대전)',              values:[3,2,1,1,null,null]},
-  {cat:'일반',name:'안양자이헤리티온(경기)',            values:[44,null,null,42,null,null]},
-  {cat:'일반',name:'수지자이에디시온(경기)',            values:[7,10,15,13,null,null]},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[106,53,44,33,null,null]},
-  {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,null,2,null,null,null]},
+  {cat:'일반',name:'운암자이포레나퍼스티체',            values:[null,null,null,null,null,null]},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[2,6,3,1,null,null]},
+  {cat:'일반',name:'도룡자이라피크(대전)',              values:[2,1,1,null,null,null]},
+  {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,null,42,null,null,null]},
+  {cat:'일반',name:'수지자이에디시온(경기)',            values:[10,15,13,4,null,null]},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[53,44,33,37,null,null]},
+  {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,2,null,null,null,null]},
   {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
-  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,null,1,null,null,null]},
+  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,1,null,null,null,null]},
   {cat:'공사비확보',name:'성성자이레이크파크',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',  values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',  values:[null,null,null,null,null,null]},
@@ -395,30 +398,37 @@ let sv=loadSaved();
 let weeks   =sv?sv.weeks   :JSON.parse(JSON.stringify(DEFAULT_WEEKS));
 let projects=sv?sv.projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
 let history =sv?sv.history :[];
-let dailyLog=sv?sv.dailyLog:[];  // [{date:'26/04/09', total:6, bycat:{집중관리:1,일반:5,...}}]
+// dailyLog 초기값: 4/09~4/12 데이터 내장 (localStorage 우선)
+const DEFAULT_DAILY_LOG=[
+  {date:'26/04/09',total:6, bycat:{'집중관리':1,'일반':5,'공사비확보':0,'신규':0}},
+  {date:'26/04/10',total:15,bycat:{'집중관리':1,'일반':14,'공사비확보':0,'신규':0}},
+  {date:'26/04/11',total:7, bycat:{'집중관리':0,'일반':7, '공사비확보':0,'신규':0}},
+  {date:'26/04/12',total:21,bycat:{'집중관리':0,'일반':21,'공사비확보':0,'신규':0}},
+];
+let dailyLog=sv&&sv.dailyLog&&sv.dailyLog.length?sv.dailyLog:JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
 
 /* ═══ 일간 데이터 ═══ */
-let dailyDate="'26/04/09";
+let dailyDate="26/04/12";
 let dailyProjects=[
-  {cat:'집중관리',name:'음성자이센트럴시티(충북)',      supply:1505,prev:903, today:1},
-  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       supply:1588,prev:1100,today:0},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',        supply:52,  prev:7,   today:0},
-  {cat:'집중관리',name:'원주자이센트로(강원)',          supply:970, prev:922, today:0},
-  {cat:'일반',name:'별내자이더스타이그제큐티브',        supply:604, prev:603, today:0},
-  {cat:'일반',name:'은평자이더스타',                    supply:227, prev:220, today:0},
-  {cat:'일반',name:'운암자이포레나퍼스티체',            supply:566, prev:565, today:0},
-  {cat:'일반',name:'양산자이파크팰리체(경남)',          supply:842, prev:259, today:1},
-  {cat:'일반',name:'도룡자이라피크(대전)',              supply:299, prev:269, today:0},
-  {cat:'일반',name:'안양자이헤리티온(경기)',            supply:639, prev:595, today:0},
-  {cat:'일반',name:'수지자이에디시온(경기)',            supply:480, prev:299, today:1},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',        supply:1275,prev:1118,today:3},
-  {cat:'공사비확보',name:'대구역자이더스타(대구)',      supply:424, prev:423, today:0},
-  {cat:'공사비확보',name:'여주역자이헤리티지',          supply:769, prev:764, today:0},
-  {cat:'공사비확보',name:'순천그랜드파크자이',          supply:997, prev:988, today:0},
-  {cat:'공사비확보',name:'성성자이레이크파크',          supply:1104,prev:1058,today:0},
-  {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)', supply:797, prev:730, today:0},
-  {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)', supply:1238,prev:1202,today:0},
-  {cat:'신규',name:'구리역 하이니티 리버파크',         supply:505, prev:349, today:0},
+  {cat:'집중관리',name:'음성자이센트럴시티(충북)',       supply:1505,prev:903, today:0},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:739, prev:687, today:0},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',         supply:52,  prev:8,   today:0},
+  {cat:'집중관리',name:'원주자이센트로(강원)',           supply:970, prev:922, today:0},
+  {cat:'일반',name:'별내자이더스타이그제큐티브',         supply:604, prev:520, today:0},
+  {cat:'일반',name:'은평자이더스타',                     supply:227, prev:220, today:0},
+  {cat:'일반',name:'운암자이포레나퍼스티체',             supply:1192,prev:1190,today:0},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:260, today:1},
+  {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:269, today:0},
+  {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:595, today:0},
+  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:304, today:0},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1138,today:20},
+  {cat:'공사비확보',name:'대구역자이더스타(대구)',       supply:424, prev:423, today:0},
+  {cat:'공사비확보',name:'여주역자이헤리티지',           supply:769, prev:764, today:0},
+  {cat:'공사비확보',name:'순천그랜드파크자이',           supply:997, prev:988, today:0},
+  {cat:'공사비확보',name:'성성자이레이크파크',           supply:1104,prev:1058,today:0},
+  {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',   supply:797, prev:730, today:0},
+  {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',   supply:1238,prev:1202,today:0},
+  {cat:'신규',name:'구리역 하이니티 리버파크',          supply:505, prev:304, today:0},
 ];
 
 /* ═══ 유틸 ═══ */
@@ -547,11 +557,11 @@ function renderWKPI(){
   const pct=pv>0?Math.round((lv-pv)/pv*100):null;
   const top=[...projects].sort((a,b)=>ptot(b)-ptot(a))[0];
   const kpis=[
-    {icon:'🏠',c:'#1976d2',label:'4주 누계 계약',val:gt.toLocaleString(),unit:'세대',sub:`${projects.length}개 단지`},
-    {icon:'📈',c:'#2e7d32',label:'최근 주차 계약',val:lv.toLocaleString(),unit:'세대',sub:li>=0?weeks[li]:'-',badge:pct!=null?{cls:pct>=0?'bu':'bd',t:(pct>=0?'▲':'▼')+Math.abs(pct)+'%'}:null},
-    {icon:'🏆',c:'#f57c00',label:'최다 계약 단지',val:top?ptot(top).toLocaleString():'-',unit:'세대',sub:top?top.name.replace(/\(.*\)/,''):'-',badge:top&&gt>0?{cls:'bn',t:Math.round(ptot(top)/gt*100)+'%'}:null},
-    {icon:'📅',c:'#9c27b0',label:'집계 주차',val:ai.length,unit:'주',sub:ai.length?`${weeks[ai[0]]} ~ ${weeks[ai[ai.length-1]]}`:'-'},
-    {icon:'📋',c:'#0097a7',label:'활성 단지',val:projects.filter(p=>ptot(p)>0).length,unit:'개',sub:`전체 ${projects.length}개 중`},
+    {icon:'🏠',c:'#1565c0',label:'4주 누계 계약',val:gt.toLocaleString(),unit:'세대',sub:`${projects.length}개 단지`},
+    {icon:'📈',c:'#276221',label:'최근 주차 계약',val:lv.toLocaleString(),unit:'세대',sub:li>=0?weeks[li]:'-',badge:pct!=null?{cls:pct>=0?'bu':'bd',t:(pct>=0?'▲':'▼')+Math.abs(pct)+'%'}:null},
+    {icon:'🏆',c:'#d35400',label:'최다 계약 단지',val:top?ptot(top).toLocaleString():'-',unit:'세대',sub:top?top.name.replace(/\(.*\)/,''):'-',badge:top&&gt>0?{cls:'bn',t:Math.round(ptot(top)/gt*100)+'%'}:null},
+    {icon:'📅',c:'#7b1fa2',label:'집계 주차',val:ai.length,unit:'주',sub:ai.length?`${weeks[ai[0]]} ~ ${weeks[ai[ai.length-1]]}`:'-'},
+    {icon:'📋',c:'#00838f',label:'활성 단지',val:projects.filter(p=>ptot(p)>0).length,unit:'개',sub:`전체 ${projects.length}개 중`},
   ];
   document.getElementById('wKpiGrid').innerHTML=kpis.map((k,i)=>`
     <div class="kpi-card" style="--kc:${k.c};animation-delay:${i*.04+.04}s">
@@ -587,17 +597,17 @@ function renderWCatRow(){
 function renderWLine(){
   const ai=awi(),al=ai.map(i=>weeks[i]),wt=wtots();
   let ds;
-  if(wFLine==='all') ds=[{label:'전체',data:ai.map(i=>wt[i]),borderColor:'#1976d2',backgroundColor:'rgba(25,118,210,0.07)',pointBackgroundColor:'#1976d2',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,tension:.35,fill:true}];
+  if(wFLine==='all') ds=[{label:'전체',data:ai.map(i=>wt[i]),borderColor:'#1565c0',backgroundColor:'rgba(21,101,192,0.07)',pointBackgroundColor:'#1565c0',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,tension:.35,fill:true}];
   else{const m=CM[wFLine],cw=cwtots(wFLine);ds=[{label:wFLine,data:ai.map(i=>cw[i]),borderColor:m.color,backgroundColor:m.bg+'99',pointBackgroundColor:m.color,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:5,tension:.35,fill:true}];}
   if(wLCI)wLCI.destroy();
-  wLCI=new Chart(document.getElementById('wLineChart'),{type:'line',data:{labels:al,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT},scales:SC}});
+  wLCI=new Chart(document.getElementById('wLineChart'),{type:'line',data:{labels:al,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT,datalabels:{display:false}},scales:SC}});
 }
 
 function renderWCatLine(){
   const ai=awi(),al=ai.map(i=>weeks[i]);
   const ds=CATS.map(cat=>{const m=CM[cat],cw=cwtots(cat);return{label:cat,data:ai.map(i=>cw[i]),borderColor:m.color,backgroundColor:m.bg,pointBackgroundColor:m.color,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:.35,fill:false};});
   if(wCLCI)wCLCI.destroy();
-  wCLCI=new Chart(document.getElementById('wCatLineChart'),{type:'line',data:{labels:al,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},tooltip:TT},scales:SC}});
+  wCLCI=new Chart(document.getElementById('wCatLineChart'),{type:'line',data:{labels:al,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},tooltip:TT,datalabels:{display:false}},scales:SC}});
 }
 
 function renderWDoughnut(){
@@ -607,7 +617,8 @@ function renderWDoughnut(){
     data:{labels:CATS,datasets:[{data:CATS.map(c=>ctot(c)),backgroundColor:CATS.map(c=>CM[c].color),borderColor:'#ffffff',borderWidth:3}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{
       legend:{position:'right',labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},
-      tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toLocaleString()}세대 (${gt>0?Math.round(ctx.raw/gt*100):0}%)`}}
+      tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toLocaleString()}세대 (${gt>0?Math.round(ctx.raw/gt*100):0}%)`}},
+      datalabels:{display:false}
     }}
   });
 }
@@ -624,9 +635,20 @@ function renderWBar(){
       <span style="width:8px;height:8px;border-radius:2px;background:${WCOL[li]};display:inline-block"></span>${weeks[wi]}
     </span>`).join('');
   if(wBI)wBI.destroy();
+  // 마지막 스택에만 합계 표시
+  const lastDs=ds[ds.length-1];
+  if(lastDs) lastDs.datalabels={
+    anchor:'end',align:'right',
+    formatter:(v,ctx)=>{
+      const total=ds.reduce((s,d)=>s+(d.data[ctx.dataIndex]||0),0);
+      return total>0?total+'세대':'';
+    },
+    color:'#3a4050',font:{size:10,weight:'600',family:"'Pretendard'"},padding:{left:4}
+  };
+  ds.forEach((d,i)=>{if(i<ds.length-1) d.datalabels={display:false};});
   wBI=new Chart(document.getElementById('wBarChart'),{type:'bar',data:{labels:sorted.map(p=>p.name.replace(/\(.*\)/,'')),datasets:ds},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{title:it=>`${sorted[it[0].dataIndex].name} [${sorted[it[0].dataIndex].cat}]`,label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}}},
+      plugins:{legend:{display:false},datalabels:{display:true},tooltip:{...TT,callbacks:{title:it=>`${sorted[it[0].dataIndex].name} [${sorted[it[0].dataIndex].cat}]`,label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}}},
       scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}}},y:{stacked:true,grid:{display:false},ticks:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},autoSkip:false}}}
     }
   });
@@ -666,11 +688,11 @@ function renderDKPI(){
   const tc=dailyProjects.reduce((s,p)=>s+dcum(p),0);
   const tr=dailyProjects.reduce((s,p)=>s+dremain(p),0);
   const kpis=[
-    {icon:'📌',c:'#e53935',label:'금일 계약',val:tt,unit:'세대',sub:dailyDate+' 기준'},
-    {icon:'📊',c:'#1976d2',label:'누계 계약',val:fmtN(tc),unit:'세대',sub:`공급 ${fmtN(ts)}세대 중`},
-    {icon:'📉',c:'#2e7d32',label:'전체 계약율',val:(tc/ts*100).toFixed(1),unit:'%',sub:`잔여 ${fmtN(tr)}세대`},
-    {icon:'🏢',c:'#9c27b0',label:'공급 규모',val:fmtN(ts),unit:'세대',sub:`${dailyProjects.length}개 단지`},
-    {icon:'✅',c:'#f57c00',label:'금일 계약 단지',val:dailyProjects.filter(p=>p.today>0).length,unit:'개',sub:`전체 ${dailyProjects.length}개 중`},
+    {icon:'📌',c:'#c0392b',label:'금일 계약',val:tt,unit:'세대',sub:dailyDate+' 기준'},
+    {icon:'📊',c:'#1565c0',label:'누계 계약',val:fmtN(tc),unit:'세대',sub:`공급 ${fmtN(ts)}세대 중`},
+    {icon:'📉',c:'#276221',label:'전체 계약율',val:(tc/ts*100).toFixed(1),unit:'%',sub:`잔여 ${fmtN(tr)}세대`},
+    {icon:'🏢',c:'#7b1fa2',label:'공급 규모',val:fmtN(ts),unit:'세대',sub:`${dailyProjects.length}개 단지`},
+    {icon:'✅',c:'#d35400',label:'금일 계약 단지',val:dailyProjects.filter(p=>p.today>0).length,unit:'개',sub:`전체 ${dailyProjects.length}개 중`},
   ];
   document.getElementById('dKpiGrid').innerHTML=kpis.map((k,i)=>`
     <div class="kpi-card" style="--kc:${k.c};animation-delay:${i*.04+.04}s">
@@ -686,18 +708,22 @@ function renderDCatBar(){
   const maxVal=Math.max(...data,1);
   if(dCatBI)dCatBI.destroy();
   dCatBI=new Chart(document.getElementById('dCatBarChart'),{type:'bar',
-    data:{labels:CATS,datasets:[{data,backgroundColor:CATS.map(c=>CM[c].color),borderRadius:4,barPercentage:.5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:TT},
-      scales:{...SC,y:{...SC.y,min:0,max:Math.ceil(maxVal),ticks:{...SC.y.ticks,stepSize:1,precision:0}}}}});
+    data:{labels:CATS,datasets:[{data,backgroundColor:CATS.map(c=>CM[c].color),borderRadius:4,barPercentage:.5,
+      datalabels:{anchor:'end',align:'end',formatter:v=>v>0?v+'세대':'',color:'#3a4050',font:{size:11,weight:'600',family:"'Pretendard'"}}}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:TT,datalabels:{display:true}},
+      scales:{...SC,y:{...SC.y,min:0,max:Math.ceil(maxVal*1.3),ticks:{...SC.y.ticks,stepSize:1,precision:0}}}}});
 }
 
 function renderDRateChart(){
   const data=CATS.map(cat=>{const ps=dailyProjects.filter(p=>p.cat===cat),s=ps.reduce((a,p)=>a+p.supply,0),c=ps.reduce((a,p)=>a+dcum(p),0);return s>0?parseFloat((c/s*100).toFixed(1)):0;});
   if(dRateCI)dRateCI.destroy();
   dRateCI=new Chart(document.getElementById('dRateChart'),{type:'bar',
-    data:{labels:CATS,datasets:[{data,backgroundColor:CATS.map(c=>CM[c].color),borderRadius:4,barPercentage:.5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.raw}%`}}},
-      scales:{...SC,y:{...SC.y,max:100,ticks:{...SC.y.ticks,callback:v=>v+'%'}}}}});
+    data:{labels:CATS,datasets:[{data,backgroundColor:CATS.map(c=>CM[c].color),borderRadius:4,barPercentage:.5,
+      datalabels:{anchor:'end',align:'end',formatter:v=>v>0?v+'%':'',color:'#3a4050',font:{size:11,weight:'600',family:"'Pretendard'"}}}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.raw}%`}},datalabels:{display:true}},
+      scales:{...SC,y:{...SC.y,max:110,ticks:{...SC.y.ticks,callback:v=>v+'%'}}}}});
 }
 
 function renderDTrend(){
@@ -716,7 +742,7 @@ function renderDTrend(){
   if(dFTrend==='all'){
     // 전체 합계 + 분류별 4개 라인
     datasets=[
-      {label:'전체',data:log.map(r=>r.total),borderColor:'#1976d2',backgroundColor:'rgba(25,118,210,0.07)',pointBackgroundColor:'#1976d2',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:.3,fill:true,borderWidth:2.5},
+      {label:'전체',data:log.map(r=>r.total),borderColor:'#1565c0',backgroundColor:'rgba(21,101,192,0.07)',pointBackgroundColor:'#1565c0',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:.3,fill:true,borderWidth:2.5},
       ...CATS.map(cat=>({
         label:cat,data:log.map(r=>r.bycat[cat]||0),
         borderColor:CM[cat].color,backgroundColor:'transparent',
@@ -744,7 +770,8 @@ function renderDTrend(){
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{position:'top',labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:14,boxWidth:10,usePointStyle:true,pointStyle:'circle'}},
-        tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}}
+        tooltip:{...TT,callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}},
+        datalabels:{display:false}
       },
       scales:{
         x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"},maxRotation:30,autoSkip:true,maxTicksLimit:20}},
@@ -761,11 +788,13 @@ function renderDRemain(){
   if(dRemainBI)dRemainBI.destroy();
   dRemainBI=new Chart(document.getElementById('dRemainChart'),{type:'bar',
     data:{labels:sorted.map(p=>p.name.replace(/\(.*\)/,'')),datasets:[
-      {label:'누계 계약',data:sorted.map(p=>dcum(p)),backgroundColor:sorted.map(p=>CM[p.cat].color),borderRadius:0,borderSkipped:false,barPercentage:.65,stack:'s'},
-      {label:'잔여',data:sorted.map(p=>dremain(p)),backgroundColor:'rgba(0,0,0,0.06)',borderRadius:3,borderSkipped:false,barPercentage:.65,stack:'s'},
+      {label:'누계 계약',data:sorted.map(p=>dcum(p)),backgroundColor:sorted.map(p=>CM[p.cat].color),borderRadius:0,borderSkipped:false,barPercentage:.65,stack:'s',
+        datalabels:{anchor:'center',align:'center',formatter:v=>v>0?v.toLocaleString():'',color:'#ffffff',font:{size:10,weight:'700',family:"'Pretendard'"}}},
+      {label:'잔여',data:sorted.map(p=>dremain(p)),backgroundColor:'rgba(0,0,0,0.07)',borderRadius:3,borderSkipped:false,barPercentage:.65,stack:'s',
+        datalabels:{anchor:'center',align:'center',formatter:v=>v>0?v.toLocaleString()+'▪':'',color:'#7a8294',font:{size:10,weight:'600',family:"'Pretendard'"}}},
     ]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},
+      plugins:{legend:{labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:12,boxWidth:8,usePointStyle:true,pointStyle:'circle'}},datalabels:{display:true},
         tooltip:{...TT,callbacks:{title:it=>`${sorted[it[0].dataIndex].name}`,label:ctx=>ctx.datasetIndex===0?` 누계 계약: ${ctx.raw.toLocaleString()}세대`:` 잔여: ${ctx.raw.toLocaleString()}세대`}}},
       scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}}},y:{stacked:true,grid:{display:false},ticks:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},autoSkip:false}}}
     }
