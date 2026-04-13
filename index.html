@@ -147,7 +147,18 @@
   .ab{margin-top:.5rem;display:inline-flex;align-items:center;gap:.4rem;background:none;border:1px dashed var(--border2);border-radius:5px;padding:.4rem .9rem;color:var(--muted);font-size:.73rem;font-weight:500;cursor:pointer;font-family:'Pretendard',sans-serif;transition:all .15s;width:100%;justify-content:center}
   .ab:hover{border-color:var(--accent);color:var(--accent)}
 
-  /* ── 이력 ── */
+  /* ── 금일 계약 단지 카드 ── */
+  .today-list{display:flex;flex-direction:column;gap:.5rem;margin-top:.25rem}
+  .today-item{display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;background:var(--surface2);border-radius:6px;border-left:3px solid var(--item-c)}
+  .today-item-left{display:flex;align-items:center;gap:.6rem}
+  .today-item-name{font-size:.82rem;font-weight:600;color:var(--text)}
+  .today-item-count{font-size:1.25rem;font-weight:800;color:var(--item-c);letter-spacing:-.03em;white-space:nowrap}
+  .today-item-unit{font-size:.72rem;font-weight:500;color:var(--muted);margin-left:2px}
+  .today-item-cum{font-size:.7rem;color:var(--muted2);margin-top:1px}
+  .today-empty{font-size:.82rem;color:var(--muted);text-align:center;padding:2rem 0;line-height:1.8}
+  .today-total{display:flex;justify-content:space-between;align-items:center;padding:.65rem .85rem;border-top:1px solid var(--border);margin-top:.5rem}
+  .today-total-label{font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+  .today-total-val{font-size:1.1rem;font-weight:800;color:var(--text)}
   .history-box{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:.75rem 1rem;margin-top:.875rem;max-height:150px;overflow-y:auto}
   .history-box p{font-size:.72rem;color:var(--text2);font-family:'Pretendard',sans-serif;line-height:1.9;border-bottom:1px solid var(--border);padding-bottom:.25rem;margin-bottom:.25rem}
   .history-box p:last-child{border-bottom:none;margin-bottom:0}
@@ -194,12 +205,12 @@
     <div class="kpi-grid" id="dKpiGrid"></div>
     <div class="main-grid">
       <div class="card">
-        <div class="card-header"><div><div class="card-title">카테고리별 금일 계약</div><div class="card-subtitle">카테고리별 당일 계약 세대수</div></div></div>
-        <div class="chart-wrap" style="height:200px"><canvas id="dCatBarChart"></canvas></div>
-      </div>
-      <div class="card">
         <div class="card-header"><div><div class="card-title">카테고리별 계약율</div><div class="card-subtitle">공급세대 대비 누계 계약율</div></div></div>
         <div class="chart-wrap" style="height:200px"><canvas id="dRateChart"></canvas></div>
+      </div>
+      <div class="card" id="todayCard">
+        <div class="card-header"><div><div class="card-title">금일 계약 단지</div><div class="card-subtitle" id="todayCardDate"></div></div></div>
+        <div id="todayList"></div>
       </div>
       <div class="card full-width">
         <div class="card-header">
@@ -373,16 +384,16 @@ const DEFAULT_WEEKS=['1주(3/20~3/26)','2주(3/27~4/2)','3주(4/3~4/9)','4주(4/
 const DEFAULT_PROJECTS=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[null,null,1,null,null,null]},
   {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[1,1,null,null,null,null]},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,3,null,1,null,null]},
-  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[4,2,2,null,null,null]},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,3,null,2,null,null]},
+  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[4,2,2,2,null,null]},
   {cat:'일반',name:'별내자이더스타이그제큐티브',        values:[null,null,null,null,null,null]},
   {cat:'일반',name:'은평자이더스타',                    values:[null,null,null,null,null,null]},
   {cat:'일반',name:'운암자이포레나퍼스티체',            values:[null,null,null,null,null,null]},
   {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[2,6,3,1,null,null]},
   {cat:'일반',name:'도룡자이라피크(대전)',              values:[2,1,1,null,null,null]},
   {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,null,42,null,null,null]},
-  {cat:'일반',name:'수지자이에디시온(경기)',            values:[10,15,13,4,null,null]},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[53,44,33,37,null,null]},
+  {cat:'일반',name:'수지자이에디시온(경기)',            values:[10,15,13,5,null,null]},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[53,44,33,39,null,null]},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,2,null,null,null,null]},
   {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,1,null,null,null,null]},
@@ -404,31 +415,32 @@ const DEFAULT_DAILY_LOG=[
   {date:'26/04/10',total:15,bycat:{'집중관리':1,'일반':14,'공사비확보':0,'신규':0}},
   {date:'26/04/11',total:7, bycat:{'집중관리':0,'일반':7, '공사비확보':0,'신규':0}},
   {date:'26/04/12',total:21,bycat:{'집중관리':0,'일반':21,'공사비확보':0,'신규':0}},
+  {date:'26/04/13',total:6, bycat:{'집중관리':3,'일반':3, '공사비확보':0,'신규':0}},
 ];
 let dailyLog=sv&&sv.dailyLog&&sv.dailyLog.length?sv.dailyLog:JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
 
 /* ═══ 일간 데이터 ═══ */
-let dailyDate="26/04/12";
+let dailyDate="26/04/13";
 let dailyProjects=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',       supply:1505,prev:903, today:0},
-  {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:739, prev:687, today:0},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',         supply:52,  prev:8,   today:0},
-  {cat:'집중관리',name:'원주자이센트로(강원)',           supply:970, prev:922, today:0},
-  {cat:'일반',name:'별내자이더스타이그제큐티브',         supply:604, prev:520, today:0},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:1588,prev:1100,today:0},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',         supply:52,  prev:8,   today:1},
+  {cat:'집중관리',name:'원주자이센트로(강원)',           supply:970, prev:922, today:2},
+  {cat:'일반',name:'별내자이더스타이그제큐티브',         supply:604, prev:603, today:0},
   {cat:'일반',name:'은평자이더스타',                     supply:227, prev:220, today:0},
-  {cat:'일반',name:'운암자이포레나퍼스티체',             supply:1192,prev:1190,today:0},
-  {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:260, today:1},
+  {cat:'일반',name:'운암자이포레나퍼스티체',             supply:566, prev:565, today:0},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:261, today:0},
   {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:269, today:0},
   {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:595, today:0},
-  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:304, today:0},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1138,today:20},
+  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:304, today:1},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1158,today:2},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',       supply:424, prev:423, today:0},
   {cat:'공사비확보',name:'여주역자이헤리티지',           supply:769, prev:764, today:0},
   {cat:'공사비확보',name:'순천그랜드파크자이',           supply:997, prev:988, today:0},
   {cat:'공사비확보',name:'성성자이레이크파크',           supply:1104,prev:1058,today:0},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',   supply:797, prev:730, today:0},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',   supply:1238,prev:1202,today:0},
-  {cat:'신규',name:'구리역 하이니티 리버파크',          supply:505, prev:304, today:0},
+  {cat:'신규',name:'구리역 하이니티 리버파크',          supply:505, prev:349, today:0},
 ];
 
 /* ═══ 유틸 ═══ */
@@ -703,16 +715,44 @@ function renderDKPI(){
     </div>`).join('');
 }
 
-function renderDCatBar(){
-  const data=CATS.map(cat=>dailyProjects.filter(p=>p.cat===cat).reduce((s,p)=>s+p.today,0));
-  const maxVal=Math.max(...data,1);
-  if(dCatBI)dCatBI.destroy();
-  dCatBI=new Chart(document.getElementById('dCatBarChart'),{type:'bar',
-    data:{labels:CATS,datasets:[{data,backgroundColor:CATS.map(c=>CM[c].color),borderRadius:4,barPercentage:.5,
-      datalabels:{anchor:'end',align:'end',formatter:v=>v>0?v+'세대':'',color:'#3a4050',font:{size:11,weight:'600',family:"'Pretendard'"}}}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:TT,datalabels:{display:true}},
-      scales:{...SC,y:{...SC.y,min:0,max:Math.ceil(maxVal*1.3),ticks:{...SC.y.ticks,stepSize:1,precision:0}}}}});
+function renderTodayCard(){
+  const contracted=dailyProjects.filter(p=>p.today>0).sort((a,b)=>{
+    const ci=CATS.indexOf(a.cat)-CATS.indexOf(b.cat);
+    return ci||b.today-a.today;
+  });
+  const total=dailyProjects.reduce((s,p)=>s+p.today,0);
+  document.getElementById('todayCardDate').textContent=dailyDate+' 기준';
+
+  if(!contracted.length){
+    document.getElementById('todayList').innerHTML=`
+      <div class="today-empty">오늘 계약된 단지가 없습니다</div>`;
+    return;
+  }
+
+  const items=contracted.map(p=>{
+    const m=CM[p.cat];
+    const cum=p.prev+p.today;
+    const rate=p.supply>0?(cum/p.supply*100).toFixed(1):'-';
+    return `<div class="today-item" style="--item-c:${m.color}">
+      <div class="today-item-left">
+        <span class="cb ${m.cls}">${p.cat}</span>
+        <div>
+          <div class="today-item-name">${p.name}</div>
+          <div class="today-item-cum">누계 ${cum.toLocaleString()}세대 · 계약율 ${rate}%</div>
+        </div>
+      </div>
+      <div>
+        <span class="today-item-count">+${p.today}</span><span class="today-item-unit">세대</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('todayList').innerHTML=`
+    <div class="today-list">${items}</div>
+    <div class="today-total">
+      <span class="today-total-label">금일 합계</span>
+      <span class="today-total-val">${total.toLocaleString()} <span style="font-size:.8rem;font-weight:500;color:var(--muted)">세대</span></span>
+    </div>`;
 }
 
 function renderDRateChart(){
@@ -871,7 +911,7 @@ function showTab(id){
 }
 
 function renderWeekly(){renderWKPI();renderWCatRow();renderWLine();renderWCatLine();renderWDoughnut();renderWBar();renderWTable();}
-function renderDaily(){renderDKPI();renderDCatBar();renderDRateChart();renderDTrend();renderDRemain();renderDTable();}
+function renderDaily(){renderDKPI();renderTodayCard();renderDRateChart();renderDTrend();renderDRemain();renderDTable();}
 function renderAll(){renderWeekly();renderDaily();}
 renderAll();
 </script>
