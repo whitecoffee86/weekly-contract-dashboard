@@ -390,9 +390,9 @@ const DEFAULT_PROJECTS=[
   {cat:'일반',name:'은평자이더스타',                    values:[null,null,null,null,null,null]},
   {cat:'일반',name:'운암자이포레나퍼스티체',            values:[null,null,null,null,null,null]},
   {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[2,6,3,1,null,null]},
-  {cat:'일반',name:'도룡자이라피크(대전)',              values:[2,1,1,null,null,null]},
+  {cat:'일반',name:'도룡자이라피크(대전)',              values:[2,1,1,1,null,null]},
   {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,null,42,null,null,null]},
-  {cat:'일반',name:'수지자이에디시온(경기)',            values:[10,15,13,5,null,null]},
+  {cat:'일반',name:'수지자이에디시온(경기)',            values:[10,15,13,6,null,null]},
   {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[53,44,33,42,null,null]},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,2,null,null,null,null]},
   {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
@@ -409,7 +409,7 @@ let sv=loadSaved();
 let weeks   =sv?sv.weeks   :JSON.parse(JSON.stringify(DEFAULT_WEEKS));
 let projects=sv?sv.projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
 let history =sv?sv.history :[];
-// dailyLog 초기값: 4/09~4/15 데이터 내장 (localStorage 우선)
+// dailyLog 초기값: 4/09~4/16 데이터 내장 (localStorage 우선)
 const DEFAULT_DAILY_LOG=[
   {date:'26/04/09',total:6, bycat:{'집중관리':1,'일반':5,'공사비확보':0,'신규':0}},
   {date:'26/04/10',total:15,bycat:{'집중관리':1,'일반':14,'공사비확보':0,'신규':0}},
@@ -418,24 +418,25 @@ const DEFAULT_DAILY_LOG=[
   {date:'26/04/13',total:6, bycat:{'집중관리':3,'일반':3, '공사비확보':0,'신규':0}},
   {date:'26/04/14',total:0, bycat:{'집중관리':0,'일반':0, '공사비확보':0,'신규':0}},
   {date:'26/04/15',total:4, bycat:{'집중관리':1,'일반':3, '공사비확보':0,'신규':0}},
+  {date:'26/04/16',total:2, bycat:{'집중관리':0,'일반':2, '공사비확보':0,'신규':0}},
 ];
 let dailyLog=sv&&sv.dailyLog&&sv.dailyLog.length?sv.dailyLog:JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
 
 /* ═══ 일간 데이터 ═══ */
-let dailyDate="26/04/15";
+let dailyDate="26/04/16";
 let dailyProjects=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',       supply:1505,prev:903, today:0},
-  {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:1588,prev:1100,today:1},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:1588,prev:1101,today:0},
   {cat:'집중관리',name:'범어자이오피스텔(대구)',         supply:52,  prev:9,   today:0},
   {cat:'집중관리',name:'원주자이센트로(강원)',           supply:970, prev:924, today:0},
   {cat:'일반',name:'별내자이더스타이그제큐티브',         supply:604, prev:603, today:0},
   {cat:'일반',name:'은평자이더스타',                     supply:227, prev:220, today:0},
   {cat:'일반',name:'운암자이포레나퍼스티체',             supply:566, prev:565, today:0},
   {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:261, today:0},
-  {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:269, today:0},
+  {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:269, today:1},
   {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:595, today:0},
-  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:305, today:0},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1160,today:3},
+  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:305, today:1},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1163,today:0},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',       supply:424, prev:423, today:0},
   {cat:'공사비확보',name:'여주역자이헤리티지',           supply:769, prev:764, today:0},
   {cat:'공사비확보',name:'순천그랜드파크자이',           supply:997, prev:988, today:0},
