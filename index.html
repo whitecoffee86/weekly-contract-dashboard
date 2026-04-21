@@ -196,18 +196,18 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
 <!-- ══ 일간 탭 ══ -->
 <div class="tab-content active" id="content-daily">
 
-  <!-- 상단 1행: 금일계약(좌) + 금일계약단지(우) -->
+  <!-- 상단 1행: 금일계약(좌) + 총미분양(우) -->
   <div class="daily-top">
     <div class="today-big-card" id="todayBigCard"></div>
+    <div class="remain-big-card" id="remainBigCard"></div>
+  </div>
+
+  <div class="main-grid">
+    <!-- 2행 좌: 금일 계약 단지 -->
     <div class="card" id="todayCard">
       <div class="card-header"><div><div class="card-title">금일 계약 단지</div><div class="card-subtitle" id="todayCardDate"></div></div></div>
       <div id="todayList"></div>
     </div>
-  </div>
-
-  <div class="main-grid">
-    <!-- 2행 좌: 미분양 숫자 -->
-    <div class="remain-big-card" id="remainBigCard"></div>
     <!-- 2행 우: 카테고리별 미분양 막대 -->
     <div class="card">
       <div class="card-header"><div><div class="card-title">카테고리별 미분양 세대</div><div class="card-subtitle">잔여(미분양) 세대수</div></div></div>
@@ -654,7 +654,7 @@ function renderDTrend(){
   if(dFTrend==='all'){
     yMax=Math.ceil(allMax*1.15);
     datasets=[
-      {label:'전체',data:log.map(r=>r.total),borderColor:'#1565c0',backgroundColor:'rgba(21,101,192,0.07)',pointBackgroundColor:'#1565c0',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:.3,fill:true,borderWidth:2.5},
+      {label:'전체',data:log.map(r=>r.total),borderColor:'#455a64',backgroundColor:'rgba(69,90,100,0.07)',pointBackgroundColor:'#455a64',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,tension:.3,fill:true,borderWidth:2.5},
       ...CATS.map(cat=>({label:cat,data:log.map(r=>r.bycat[cat]||0),borderColor:CM[cat].color,backgroundColor:'transparent',pointBackgroundColor:CM[cat].color,pointBorderColor:'#fff',pointBorderWidth:1,pointRadius:3,tension:.3,fill:false,borderWidth:1.5}))
     ];
   } else {
@@ -855,21 +855,23 @@ function renderWTable(){
   const wt=wtots();
   const filtered=wFTable==='all'?projects:projects.filter(p=>p.cat===wFTable);
   const wLabel=weeks[wi];
-  document.getElementById('wTableLabel').textContent=wLabel?.match(/\(([^)]+)\)/)?.[1]||'';
-  document.getElementById('wTHead').innerHTML=`<th>단지명</th><th>분류</th><th>${wLabel}</th><th>누계(4주)</th>`;
+  const range=wLabel?.match(/\(([^)]+)\)/)?.[1]||'';
+  document.getElementById('wTableLabel').textContent=range;
+  document.getElementById('wTHead').innerHTML=`<th>단지명</th><th>분류</th><th>${range} (일주간)</th>`;
   let rows='';
   (wFTable==='all'?CATS:[wFTable]).forEach(cat=>{
     const ps=filtered.filter(p=>p.cat===cat);if(!ps.length)return;
     const m=CM[cat];
     const catWeek=ps.reduce((s,p)=>s+vv(p.values[wi]),0);
-    const catTot=ps.reduce((s,p)=>s+ptot(p),0);
-    if(wFTable==='all') rows+=`<tr class="sec-row"><td colspan="4"><span class="cb ${m.cls}">${cat}</span><span class="meta-nums">이번 주 <strong>${catWeek}</strong>세대 &nbsp;·&nbsp; 누계 <strong>${catTot}</strong>세대</span></td></tr>`;
+    if(wFTable==='all') rows+=`<tr class="sec-row"><td colspan="3"><span class="cb ${m.cls}">${cat}</span><span class="meta-nums">주간 계약 <strong>${catWeek}</strong>세대</span></td></tr>`;
     ps.sort((a,b)=>vv(b.values[wi])-vv(a.values[wi])).forEach(p=>{
-      rows+=`<tr><td>${p.name}</td><td><span class="cb ${m.cls}">${cat}</span></td><td class="tc">${fmt(vv(p.values[wi]))}</td><td>${fmt(ptot(p))}</td></tr>`;
+      const val=vv(p.values[wi]);
+      if(!val)return;
+      rows+=`<tr><td>${p.name}</td><td><span class="cb ${m.cls}">${cat}</span></td><td class="tc">${fmt(val)}</td></tr>`;
     });
   });
   document.getElementById('wTBody').innerHTML=rows;
-  document.getElementById('wTFoot').innerHTML=`<td>합 계</td><td></td><td>${wt[wi].toLocaleString()}</td><td>${gtot().toLocaleString()}</td>`;
+  document.getElementById('wTFoot').innerHTML=`<td>합 계</td><td></td><td>${wt[wi].toLocaleString()}</td>`;
 }
 
 /* 필터 */
