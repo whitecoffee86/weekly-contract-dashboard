@@ -372,31 +372,31 @@ const SC={x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:1
 Chart.register(ChartDataLabels);
 
 /* ═══ 주간 데이터: 월~일 기준, 4주 = 지난주(4/13~4/19) ═══ */
-const DEFAULT_WEEKS=['1주(3/23~3/29)','2주(3/30~4/5)','3주(4/6~4/12)','4주(4/13~4/19)','5주차','6주차'];
+const DEFAULT_WEEKS=['1주(3/30~4/5)','2주(4/6~4/12)','3주(4/13~4/19)','4주(4/21~4/27)','5주차','6주차'];
 const DEFAULT_PROJECTS=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[null,null,null,null,null,null]},
-  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[null,null,null,1,null,null]},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,null,null,1,null,null]},
-  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[null,null,null,2,null,null]},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[null,null,1,null,null,null]},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,null,1,1,null,null]},
+  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[null,null,2,null,null,null]},
   {cat:'일반',name:'별내자이더스타이그제큐티브',        values:[null,null,null,null,null,null]},
   {cat:'일반',name:'은평자이더스타',                    values:[null,null,null,null,null,null]},
   {cat:'일반',name:'운암자이포레나퍼스티체',            values:[null,null,null,null,null,null]},
-  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[null,null,null,1,null,null]},
-  {cat:'일반',name:'도룡자이라피크(대전)',              values:[null,null,null,null,null,null]},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[null,null,1,null,null,null]},
+  {cat:'일반',name:'도룡자이라피크(대전)',              values:[null,null,null,1,null,null]},
   {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,null,null,null,null,null]},
-  {cat:'일반',name:'수지자이에디시온(경기)',            values:[null,null,null,11,null,null]},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[null,null,null,37,null,null]},
+  {cat:'일반',name:'수지자이에디시온(경기)',            values:[null,null,11,null,null,null]},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[null,null,37,null,null,null]},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
-  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,null,null,null,null,null]},
+  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,null,null,1,null,null]},
   {cat:'공사비확보',name:'성성자이레이크파크',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',  values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',  values:[null,null,null,null,null,null]},
   {cat:'신규',name:'구리역 하이니티 리버파크',         values:[null,null,null,null,null,null]},
 ];
 
-function loadSaved(){try{const s=localStorage.getItem('ctr_v5');if(s)return JSON.parse(s);}catch(e){}return null;}
-function saveSt(){try{localStorage.setItem('ctr_v5',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
+function loadSaved(){try{const s=localStorage.getItem('ctr_v6');if(s)return JSON.parse(s);}catch(e){}return null;}
+function saveSt(){try{localStorage.setItem('ctr_v6',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
 let sv=loadSaved();
 let weeks   =sv?sv.weeks   :JSON.parse(JSON.stringify(DEFAULT_WEEKS));
 let projects=sv?sv.projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
@@ -414,27 +414,28 @@ const DEFAULT_DAILY_LOG=[
   {date:'26/04/18',total:29,bycat:{'집중관리':0,'일반':29,'공사비확보':0,'신규':0}},
   {date:'26/04/19',total:18,bycat:{'집중관리':0,'일반':18,'공사비확보':0,'신규':0}},
   {date:'26/04/20',total:1, bycat:{'집중관리':1,'일반':0, '공사비확보':0,'신규':0}},
+  {date:'26/04/21',total:2, bycat:{'집중관리':0,'일반':1, '공사비확보':1,'신규':0}},
 ];
 let dailyLog=sv&&sv.dailyLog&&sv.dailyLog.length?sv.dailyLog:JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
 
 /* 일간 데이터 */
-let dailyDate="26/04/20";
+let dailyDate="26/04/21";
 let dailyProjects=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',       supply:1505,prev:903, today:0},
   {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:1588,prev:1101,today:0},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',         supply:52,  prev:9,   today:1},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',         supply:52,  prev:10,  today:0},
   {cat:'집중관리',name:'원주자이센트로(강원)',           supply:970, prev:924, today:0},
   {cat:'일반',name:'별내자이더스타이그제큐티브',         supply:604, prev:603, today:0},
   {cat:'일반',name:'은평자이더스타',                     supply:227, prev:220, today:0},
   {cat:'일반',name:'운암자이포레나퍼스티체',             supply:566, prev:565, today:0},
   {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:263, today:0},
-  {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:270, today:0},
+  {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:270, today:1},
   {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:595, today:0},
   {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:322, today:0},
   {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1200,today:0},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',       supply:424, prev:423, today:0},
   {cat:'공사비확보',name:'여주역자이헤리티지',           supply:769, prev:764, today:0},
-  {cat:'공사비확보',name:'순천그랜드파크자이',           supply:997, prev:988, today:0},
+  {cat:'공사비확보',name:'순천그랜드파크자이',           supply:997, prev:988, today:1},
   {cat:'공사비확보',name:'성성자이레이크파크',           supply:1104,prev:1058,today:0},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',   supply:797, prev:730, today:0},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',   supply:1238,prev:1202,today:0},
@@ -466,8 +467,26 @@ function getWeekIndex(dateStr){
 }
 function dateLabel(dateStr){const d=parseDateStr(dateStr);if(!d)return dateStr;return`${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`;}
 
-/* 지난 주 인덱스: 마지막 데이터 있는 주차 */
-function lastWeekIdx(){const ai=awi();return ai.length?ai[ai.length-1]:1;}
+/* 표시 주차 결정: 완결된 주(일요일까지 끝난 주)만 표시
+   - 오늘 날짜 기준으로 현재 진행 중인 주차는 제외
+   - 완결된 주 중 가장 최근 주차를 반환
+   - 완결 기준: 해당 주의 일요일(마지막날)이 오늘보다 이전 */
+function lastWeekIdx(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const wt=wtots();
+  // 인덱스 3→0 순으로 탐색, 완결된 주 중 데이터 있는 첫 번째
+  for(let i=3;i>=0;i--){
+    if(!wt[i])continue; // 데이터 없는 주 스킵
+    const ws=parseWeekStart(weeks[i]);
+    if(!ws)continue;
+    // 해당 주의 일요일 = 월요일 + 6일
+    const sun=new Date(ws);sun.setDate(ws.getDate()+6);sun.setHours(0,0,0,0);
+    if(sun<today)return i; // 일요일이 오늘 이전 = 완결된 주
+  }
+  // 완결된 주가 없으면 데이터 있는 가장 최근 주 반환
+  for(let i=3;i>=0;i--){if(wt[i]>0)return i;}
+  return 3;
+}
 
 /* 일간 → 주간 자동반영 */
 function applyDailyAndUpdateWeekly(){
@@ -746,30 +765,86 @@ function renderDTable(){
 
 /* ═══ 주간 렌더 ═══ */
 
-/* 주차 요약 카드 (4주, 현재=지난주) */
+/* 주차 요약 카드
+   - 완결된 주만 1~4주차로 표시 (가장 최근 완결 = 4주차)
+   - 진행 중인 주는 별도로 "이번 주 (진행 중)" 카드로 표시
+*/
 function renderWeekSummary(){
   const wt=wtots();
-  const wi=lastWeekIdx();
-  const wCards=weeks.slice(0,4).map((w,i)=>{
-    const total=wt[i]||0;
+  const today=new Date();today.setHours(0,0,0,0);
+
+  // 각 주차의 완결 여부 분류
+  const completedIdxs=[]; // 완결된 주 인덱스 목록 (오래된 순)
+  let ongoingIdx=-1;       // 현재 진행 중인 주 인덱스
+
+  weeks.slice(0,4).forEach((w,i)=>{
+    const ws=parseWeekStart(w);
+    if(!ws)return;
+    const sun=new Date(ws);sun.setDate(ws.getDate()+6);sun.setHours(0,0,0,0);
+    if(sun<today) completedIdxs.push(i);
+    else if(ws<=today) ongoingIdx=i;
+  });
+
+  // 완결된 주를 최근 4개로 제한, 번호 역방향 부여 (마지막=4주차)
+  const recent=completedIdxs.slice(-4);
+  const cards=[];
+
+  recent.forEach((idx,rank)=>{
+    const weekNum=rank+1; // 1,2,3,4주차
+    const isLast=rank===recent.length-1; // 4주차 = 지난 주
+    const w=weeks[idx];
+    const total=wt[idx]||0;
     const range=w.match(/\(([^)]+)\)/);
     const rangeStr=range?range[1]:'';
-    const isCurrent=i===wi;
-    const catPills=total>0?CATS.map(cat=>{
-      const cv=projects.filter(p=>p.cat===cat).reduce((s,p)=>s+vv(p.values[i]),0);
+    const catPills=CATS.map(cat=>{
+      const cv=projects.filter(p=>p.cat===cat).reduce((s,p)=>s+vv(p.values[idx]),0);
       if(!cv)return'';
       const m=CM[cat];
       return`<span class="week-cat-pill" style="background:${m.bg};color:${m.color};border:1px solid ${m.color}40">${cat.replace('공사비확보','공사비')} ${cv}</span>`;
-    }).join(''):'';
-    const weekNum=isCurrent?'지난 주':`${i+1}주차`;
-    return`<div class="week-card${isCurrent?' current':''}" style="--wc:${WCOL[i]}">
-      <div class="week-card-label">${weekNum}</div>
+    }).join('');
+
+    const label=isLast?`${weekNum}주차 <span style="font-size:.6rem;color:var(--accent);font-weight:700">지난 주</span>`:`${weekNum}주차`;
+    cards.push(`<div class="week-card${isLast?' current':''}" style="--wc:${WCOL[rank]}">
+      <div class="week-card-label">${label}</div>
       <div class="week-card-range">${rangeStr}</div>
       <div class="week-card-val">${total>0?total.toLocaleString():'—'}<span class="week-card-unit">${total>0?'세대':''}</span></div>
       ${total>0&&catPills?`<div class="week-card-cats">${catPills}</div>`:`<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem">데이터 없음</div>`}
-    </div>`;
-  }).join('');
-  document.getElementById('weekSummary').innerHTML=wCards;
+    </div>`);
+  });
+
+  // 빈 슬롯 채우기 (완결 주가 4개 미만일 때)
+  while(cards.length<4){
+    cards.unshift(`<div class="week-card" style="--wc:#c8cdd5;opacity:.55">
+      <div class="week-card-label" style="color:var(--muted2)">—주차</div>
+      <div class="week-card-range" style="color:var(--muted2)">데이터 없음</div>
+      <div class="week-card-val" style="color:var(--muted2)">—</div>
+    </div>`);
+  }
+
+  // 진행 중인 주 카드 (있을 때만 추가)
+  if(ongoingIdx>=0){
+    const w=weeks[ongoingIdx];
+    const total=wt[ongoingIdx]||0;
+    const range=w.match(/\(([^)]+)\)/);
+    const rangeStr=range?range[1]:'';
+    const catPills=CATS.map(cat=>{
+      const cv=projects.filter(p=>p.cat===cat).reduce((s,p)=>s+vv(p.values[ongoingIdx]),0);
+      if(!cv)return'';
+      const m=CM[cat];
+      return`<span class="week-cat-pill" style="background:${m.bg};color:${m.color};border:1px solid ${m.color}40">${cat.replace('공사비확보','공사비')} ${cv}</span>`;
+    }).join('');
+    cards.push(`<div class="week-card" style="--wc:#9aa0b0;border-style:dashed">
+      <div class="week-card-label" style="color:var(--muted)">이번 주 <span style="font-size:.6rem;color:var(--muted2)">(진행 중)</span></div>
+      <div class="week-card-range">${rangeStr}</div>
+      <div class="week-card-val">${total>0?total.toLocaleString():'—'}<span class="week-card-unit">${total>0?'세대':''}</span></div>
+      ${total>0&&catPills?`<div class="week-card-cats">${catPills}</div>`:`<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem">집계 중</div>`}
+    </div>`);
+  }
+
+  // grid 컬럼 수 조정 (진행 중 카드 포함시 5열, 아니면 4열)
+  const grid=document.getElementById('weekSummary');
+  grid.style.gridTemplateColumns=ongoingIdx>=0?'repeat(5,1fr)':'repeat(4,1fr)';
+  grid.innerHTML=cards.join('');
 }
 
 /* Top3 */
