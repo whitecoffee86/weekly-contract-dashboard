@@ -371,32 +371,32 @@ const SC={x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:1
 
 Chart.register(ChartDataLabels);
 
-/* ═══ 주간 데이터: 월~일 기준, 4주 = 지난주(4/13~4/19) ═══ */
-const DEFAULT_WEEKS=['1주(3/30~4/5)','2주(4/6~4/12)','3주(4/13~4/19)','4주(4/21~4/27)','5주차','6주차'];
+/* ═══ 주간 데이터: 월~일 기준, 4주 = 지난주(4/21~4/27) ═══ */
+const DEFAULT_WEEKS=['1주(4/6~4/12)','2주(4/13~4/19)','3주(4/20~4/26)','4주차','5주차','6주차'];
 const DEFAULT_PROJECTS=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[null,null,null,null,null,null]},
-  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[null,null,1,null,null,null]},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,null,1,1,null,null]},
-  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[null,null,2,null,null,null]},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[null,1,null,null,null,null]},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[null,1,2,null,null,null]},
+  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[null,2,null,null,null,null]},
   {cat:'일반',name:'별내자이더스타이그제큐티브',        values:[null,null,null,null,null,null]},
   {cat:'일반',name:'은평자이더스타',                    values:[null,null,null,null,null,null]},
   {cat:'일반',name:'운암자이포레나퍼스티체',            values:[null,null,null,null,null,null]},
-  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[null,null,1,null,null,null]},
-  {cat:'일반',name:'도룡자이라피크(대전)',              values:[null,null,null,1,null,null]},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[null,1,null,null,null,null]},
+  {cat:'일반',name:'도룡자이라피크(대전)',              values:[null,null,1,null,null,null]},
   {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,null,null,null,null,null]},
-  {cat:'일반',name:'수지자이에디시온(경기)',            values:[null,null,11,1,null,null]},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[null,null,37,6,null,null]},
+  {cat:'일반',name:'수지자이에디시온(경기)',            values:[null,11,14,null,null,null]},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[null,37,19,null,null,null]},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
-  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,null,null,1,null,null]},
+  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,null,2,null,null,null]},
   {cat:'공사비확보',name:'성성자이레이크파크',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',  values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',  values:[null,null,null,null,null,null]},
   {cat:'신규',name:'구리역 하이니티 리버파크',         values:[null,null,null,null,null,null]},
 ];
 
-function loadSaved(){try{const s=localStorage.getItem('ctr_v6');if(s)return JSON.parse(s);}catch(e){}return null;}
-function saveSt(){try{localStorage.setItem('ctr_v6',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
+function loadSaved(){try{const s=localStorage.getItem('ctr_v7');if(s)return JSON.parse(s);}catch(e){}return null;}
+function saveSt(){try{localStorage.setItem('ctr_v7',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
 let sv=loadSaved();
 let weeks   =sv?sv.weeks   :JSON.parse(JSON.stringify(DEFAULT_WEEKS));
 let projects=sv?sv.projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
@@ -417,11 +417,14 @@ const DEFAULT_DAILY_LOG=[
   {date:'26/04/21',total:2, bycat:{'집중관리':0,'일반':1, '공사비확보':1,'신규':0}},
   {date:'26/04/22',total:1, bycat:{'집중관리':0,'일반':1, '공사비확보':0,'신규':0}},
   {date:'26/04/23',total:6, bycat:{'집중관리':0,'일반':6, '공사비확보':0,'신규':0}},
+  {date:'26/04/24',total:6, bycat:{'집중관리':0,'일반':5, '공사비확보':1,'신규':0}},
+  {date:'26/04/25',total:12,bycat:{'집중관리':0,'일반':12,'공사비확보':0,'신규':0}},
+  {date:'26/04/26',total:9, bycat:{'집중관리':0,'일반':9, '공사비확보':0,'신규':0}},
 ];
 let dailyLog=sv&&sv.dailyLog&&sv.dailyLog.length?sv.dailyLog:JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
 
 /* 일간 데이터 */
-let dailyDate="26/04/23";
+let dailyDate="26/04/26";
 let dailyProjects=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',       supply:1505,prev:903, today:0},
   {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:1588,prev:1101,today:0},
@@ -433,11 +436,11 @@ let dailyProjects=[
   {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:263, today:0},
   {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:271, today:0},
   {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:595, today:0},
-  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:323, today:0},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1200,today:6},
+  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:330, today:6},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1211,today:3},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',       supply:424, prev:423, today:0},
   {cat:'공사비확보',name:'여주역자이헤리티지',           supply:769, prev:764, today:0},
-  {cat:'공사비확보',name:'순천그랜드파크자이',           supply:997, prev:989, today:0},
+  {cat:'공사비확보',name:'순천그랜드파크자이',           supply:997, prev:990, today:0},
   {cat:'공사비확보',name:'성성자이레이크파크',           supply:1104,prev:1058,today:0},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',   supply:797, prev:730, today:0},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',   supply:1238,prev:1202,today:0},
@@ -476,18 +479,21 @@ function dateLabel(dateStr){const d=parseDateStr(dateStr);if(!d)return dateStr;r
 function lastWeekIdx(){
   const today=new Date();today.setHours(0,0,0,0);
   const wt=wtots();
-  // 인덱스 3→0 순으로 탐색, 완결된 주 중 데이터 있는 첫 번째
+  // 날짜 파싱 가능한 주차 중 일요일이 오늘 이전(완결)이고 데이터 있는 가장 최근 주
   for(let i=3;i>=0;i--){
-    if(!wt[i])continue; // 데이터 없는 주 스킵
+    if(!wt[i])continue;
     const ws=parseWeekStart(weeks[i]);
-    if(!ws)continue;
-    // 해당 주의 일요일 = 월요일 + 6일
+    if(!ws)continue; // 날짜 없는 주차(예: '4주차') 스킵
     const sun=new Date(ws);sun.setDate(ws.getDate()+6);sun.setHours(0,0,0,0);
-    if(sun<today)return i; // 일요일이 오늘 이전 = 완결된 주
+    if(sun<=today)return i;
   }
-  // 완결된 주가 없으면 데이터 있는 가장 최근 주 반환
-  for(let i=3;i>=0;i--){if(wt[i]>0)return i;}
-  return 3;
+  // 완결된 주 없으면 날짜 있고 데이터 있는 가장 최근 주
+  for(let i=3;i>=0;i--){
+    if(!wt[i])continue;
+    const ws=parseWeekStart(weeks[i]);
+    if(ws)return i;
+  }
+  return 2;
 }
 
 /* 일간 → 주간 자동반영 */
@@ -783,7 +789,7 @@ function renderWeekSummary(){
     const ws=parseWeekStart(w);
     if(!ws)return;
     const sun=new Date(ws);sun.setDate(ws.getDate()+6);sun.setHours(0,0,0,0);
-    if(sun<today) completedIdxs.push(i);
+    if(sun<=today) completedIdxs.push(i);  // 일요일 당일도 완결로 처리
     else if(ws<=today) ongoingIdx=i;
   });
 
