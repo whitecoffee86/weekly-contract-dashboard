@@ -371,8 +371,8 @@ const SC={x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:1
 
 Chart.register(ChartDataLabels);
 
-/* ═══ 주간 데이터: 월~일 기준, 4주 = 지난주(4/21~4/27) ═══ */
-const DEFAULT_WEEKS=['1주(4/7~4/13)','2주(4/14~4/20)','3주(4/21~4/27)','4주차','5주차','6주차'];
+/* ═══ 주간 데이터: 월~일 기준, 3주 = 지난주(4/20~4/26) ═══ */
+const DEFAULT_WEEKS=['1주(4/6~4/12)','2주(4/13~4/19)','3주(4/20~4/26)','4주차','5주차','6주차'];
 const DEFAULT_PROJECTS=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[null,null,null,null,null,null]},
   {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[null,1,null,null,null,null]},
@@ -395,8 +395,8 @@ const DEFAULT_PROJECTS=[
   {cat:'신규',name:'구리역 하이니티 리버파크',         values:[null,null,null,null,null,null]},
 ];
 
-function loadSaved(){try{const s=localStorage.getItem('ctr_v7');if(s)return JSON.parse(s);}catch(e){}return null;}
-function saveSt(){try{localStorage.setItem('ctr_v7',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
+function loadSaved(){try{const s=localStorage.getItem('ctr_v8');if(s)return JSON.parse(s);}catch(e){}return null;}
+function saveSt(){try{localStorage.setItem('ctr_v8',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
 let sv=loadSaved();
 let weeks   =sv?sv.weeks   :JSON.parse(JSON.stringify(DEFAULT_WEEKS));
 let projects=sv?sv.projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
@@ -464,7 +464,7 @@ const dremain=p=>Math.max(0,p.supply-dcum(p));
 function parseDateStr(s){const c=s.replace(/[^0-9\/]/g,''),pts=c.split('/');if(pts.length!==3)return null;return new Date(2000+parseInt(pts[0]),parseInt(pts[1])-1,parseInt(pts[2]));}
 function getMonday(d){const day=d.getDay(),diff=day===0?-6:1-day,m=new Date(d);m.setDate(d.getDate()+diff);m.setHours(0,0,0,0);return m;}
 function formatWeekLabel(mon){const sun=new Date(mon);sun.setDate(mon.getDate()+6);return`${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;}
-function parseWeekStart(label){const m=label.match(/(\d+)\/(\d+)~/);if(!m)return null;return new Date(new Date().getFullYear(),parseInt(m[1])-1,parseInt(m[2]));}
+function parseWeekStart(label){const m=label.match(/\((\d+)\/(\d+)~/);if(!m)return null;return new Date(2026,parseInt(m[1])-1,parseInt(m[2]));}
 function getWeekIndex(dateStr){
   const d=parseDateStr(dateStr);if(!d)return null;
   const mon=getMonday(d);mon.setHours(0,0,0,0);
@@ -478,17 +478,16 @@ function dateLabel(dateStr){const d=parseDateStr(dateStr);if(!d)return dateStr;r
    - 완결된 주 중 가장 최근 주차를 반환
    - 완결 기준: 해당 주의 일요일(마지막날)이 오늘보다 이전 */
 function lastWeekIdx(){
-  const today=new Date();today.setHours(0,0,0,0);
+  // 시스템 날짜 대신 dailyDate 기준으로 판단 (미리보기 환경 날짜 오류 방지)
+  const today=parseDateStr(dailyDate)||new Date();today.setHours(0,0,0,0);
   const wt=wtots();
-  // 날짜 파싱 가능한 주차 중 일요일이 오늘 이전(완결)이고 데이터 있는 가장 최근 주
   for(let i=3;i>=0;i--){
     if(!wt[i])continue;
     const ws=parseWeekStart(weeks[i]);
-    if(!ws)continue; // 날짜 없는 주차(예: '4주차') 스킵
+    if(!ws)continue;
     const sun=new Date(ws);sun.setDate(ws.getDate()+6);sun.setHours(0,0,0,0);
     if(sun<=today)return i;
   }
-  // 완결된 주 없으면 날짜 있고 데이터 있는 가장 최근 주
   for(let i=3;i>=0;i--){
     if(!wt[i])continue;
     const ws=parseWeekStart(weeks[i]);
@@ -780,7 +779,7 @@ function renderDTable(){
 */
 function renderWeekSummary(){
   const wt=wtots();
-  const today=new Date();today.setHours(0,0,0,0);
+  const today=parseDateStr(dailyDate)||new Date();today.setHours(0,0,0,0);
 
   // 각 주차의 완결 여부 분류
   const completedIdxs=[]; // 완결된 주 인덱스 목록 (오래된 순)
