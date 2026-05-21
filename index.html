@@ -477,28 +477,46 @@ async function loadFromSheet(){
     ]);
     if(!단지rows||!누계rows){sheetLoadFailed=true;showLoadingBanner(false);return false;}
 
-    // 기준일: 누계현황 시트 M1 (CSV 특성상 별도 fetch)
+    // 기준일: 누계현황 헤더행 index[12]에 있음
     let refDate=dailyDate;
-    try{
-      const r2=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=누계현황&range=M1`);
-      const t=await r2.text();const parsed=parseCSV(t);
-      if(parsed[0]&&parsed[0][0])refDate=parsed[0][0].replace(/-/g,'/').replace(/20(\d\d)\//,'$1/');
-    }catch(e){}
+    if(누계rows.length>0){
+      // fetchSheet는 헤더 제외하므로 원본에서 직접 읽어야 함
+      // 대신 별도 fetch로 헤더행 포함 전체 읽기
+      try{
+        const r2=await fetch(SHEET_URLS['누계현황']);
+        const t=await r2.text();
+        const allRows=parseCSV(t);
+        // 헤더행(index 0)의 [12]에 날짜
+        if(allRows[0]&&allRows[0][12]){
+          refDate=allRows[0][12].trim().replace(/-/g,'/');
+          if(refDate.startsWith('20'))refDate=refDate.slice(2);
+        }
+      }catch(e){console.warn('기준일 읽기 실패',e);}
+    }
 
     // 주차 자동 생성
     const weekDefs=autoGenWeeks(refDate.length===8?'20'+refDate:refDate);
     const newWeeks=weekDefs.map(w=>w.label);
 
-    // 단지 마스터
+    // 단지 마스터 (단지정보 시트: [0]단지명 [1]카테고리 [2]공급 [3]분양 [4]입주)
     const projMap={};
-    단지rows.forEach(([name,cat,supply,bun,ip])=>{
+    단지rows.forEach(row=>{
+      const name=(row[0]||'').trim();
       if(!name)return;
-      projMap[name]={cat,supply:parseInt(supply)||0,bun:bun||'',ip:ip||''};
+      projMap[name]={
+        cat:(row[1]||'일반').trim(),
+        supply:parseInt(row[2])||0,
+        bun:(row[3]||'').trim(),
+        ip:(row[4]||'').trim()
+      };
     });
 
-    // 일별계약 → 주간 집계
-    const validDaily=(일별rows||[]).filter(r=>r[0]&&r[0]!=='예:');
-    const wvMap=buildWeeklyValues(weekDefs,validDaily,Object.keys(projMap));
+    // 일별계약 → 주간 집계 (일별계약 시트: [0]날짜 [1]단지명 [2]금일계약)
+    const validDaily=(일별rows||[]).filter(r=>{
+      const d=(r[0]||'').trim();
+      return d && !d.startsWith('예:') && !d.startsWith('←');
+    });
+    const wvMap=buildWeeklyValues(weekDefs,validDaily.map(r=>[r[0],r[1],r[2]]),Object.keys(projMap));
 
     // DEFAULT_PROJECTS 재구성
     const newProjects=Object.entries(projMap).map(([name,info])=>({
@@ -507,18 +525,18 @@ async function loadFromSheet(){
     }));
 
     // 누계현황 → dailyProjects 재구성
+    // 컬럼: [0]단지명 [1]카테고리 [2]공급 [3]분양 [4]입주 [5]전일누계 [6]금일 [7]누계 [8]계약율 [9]잔여
     const newDailyProjects=[];
-    누계rows.forEach(([name,cat,supply,bun,ip,prev,today,,,,])=>{
-      if(!name||name==='합  계'||name==='합 계')return;
-      const p=parseInt(prev)||0;
-      const t=parseInt(today)||0;
-      newDailyProjects.push({
-        cat,name,
-        bun:bun||projMap[name]?.bun||'',
-        ip:ip||projMap[name]?.ip||'',
-        supply:parseInt(supply)||0,
-        prev:p, today:t
-      });
+    누계rows.forEach(row=>{
+      const name=(row[0]||'').trim();
+      if(!name||name==='합  계'||name==='합 계'||name==='단지명')return;
+      const cat=(row[1]||'일반').trim();
+      const supply=parseInt(row[2])||0;
+      const bun=(row[3]||'').trim();
+      const ip=(row[4]||'').trim();
+      const prev=parseInt(row[5])||0;
+      const today=parseInt(row[6])||0;
+      newDailyProjects.push({cat,name,bun,ip,supply,prev,today});
     });
 
     // 일별계약 → dailyLog 재구성
