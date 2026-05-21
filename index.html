@@ -383,22 +383,23 @@ const DEFAULT_PROJECTS=[
   {cat:'일반',name:'운암자이포레나퍼스티체',            values:[null,null,null,null,null,null]},
   {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[null,1,8,2,null,null]},
   {cat:'일반',name:'도룡자이라피크(대전)',              values:[1,null,1,null,null,null]},
-  {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,null,-5,30,1,null]},
+  {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,null,-5,30,2,null]},
   {cat:'일반',name:'수지자이에디시온(경기)',            values:[14,22,32,21,12,null]},
   {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[19,17,4,2,null,null]},
+  {cat:'일반',name:'구리역 하이니티 리버파크',         values:[null,53,5,1,null,null]},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'순천그랜드파크자이',          values:[2,null,null,null,null,null]},
   {cat:'공사비확보',name:'성성자이레이크파크',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',  values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',  values:[null,null,null,null,null,null]},
-  {cat:'신규',name:'구리역 하이니티 리버파크',         values:[null,53,5,1,null,null]},
-  {cat:'신규',name:'아산탕정자이메트로시티',           values:[null,null,null,89,13,null]},
-  {cat:'신규',name:'창원자이더스카이',                 values:[null,null,null,46,4,null]},
+  {cat:'신규',name:'도안자이센텀리체',                 values:[null,null,null,null,null,null]},
+  {cat:'신규',name:'아산탕정자이메트로시티',           values:[null,null,null,89,19,null]},
+  {cat:'신규',name:'창원자이더스카이',                 values:[null,null,null,46,9,null]},
 ];
 
-function loadSaved(){try{const s=localStorage.getItem('ctr_v10');if(s)return JSON.parse(s);}catch(e){}return null;}
-function saveSt(){try{localStorage.setItem('ctr_v10',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
+function loadSaved(){try{const s=localStorage.getItem('ctr_v12');if(s)return JSON.parse(s);}catch(e){}return null;}
+function saveSt(){try{localStorage.setItem('ctr_v12',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
 let sv=loadSaved();
 let weeks   =sv?sv.weeks   :JSON.parse(JSON.stringify(DEFAULT_WEEKS));
 let projects=sv?sv.projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
@@ -445,11 +446,12 @@ const DEFAULT_DAILY_LOG=[
   {date:'26/05/17',total:24, bycat:{'집중관리':0,'일반':6, '공사비확보':0,'신규':18}},
   {date:'26/05/18',total:22, bycat:{'집중관리':0,'일반':11,'공사비확보':0,'신규':11}},
   {date:'26/05/19',total:8,  bycat:{'집중관리':0,'일반':2, '공사비확보':0,'신규':6}},
+  {date:'26/05/20',total:12, bycat:{'집중관리':0,'일반':1, '공사비확보':0,'신규':11}},
 ];
 let dailyLog=sv&&sv.dailyLog&&sv.dailyLog.length?sv.dailyLog:JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
 
 /* 일간 데이터 */
-let dailyDate="26/05/19";
+let dailyDate="26/05/20";
 let dailyProjects=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',       supply:1505,prev:904, today:0},
   {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:1588,prev:1102,today:0},
@@ -460,18 +462,19 @@ let dailyProjects=[
   {cat:'일반',name:'운암자이포레나퍼스티체',             supply:566, prev:565, today:0},
   {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:271, today:0},
   {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:272, today:0},
-  {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:631, today:0},
-  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:403, today:2},
+  {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:631, today:1},
+  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:405, today:0},
   {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1241,today:0},
+  {cat:'일반',name:'구리역 하이니티 리버파크',          supply:505, prev:408, today:0},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',       supply:424, prev:423, today:0},
   {cat:'공사비확보',name:'여주역자이헤리티지',           supply:769, prev:764, today:0},
   {cat:'공사비확보',name:'순천그랜드파크자이',           supply:997, prev:990, today:0},
   {cat:'공사비확보',name:'성성자이레이크파크',           supply:1104,prev:1059,today:0},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',   supply:797, prev:730, today:0},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',   supply:1238,prev:1202,today:0},
-  {cat:'신규',name:'구리역 하이니티 리버파크',          supply:505, prev:408, today:0},
-  {cat:'신규',name:'아산탕정자이메트로시티',            supply:1638,prev:1195,today:5},
-  {cat:'신규',name:'창원자이더스카이',                  supply:509, prev:127, today:1},
+  {cat:'신규',name:'도안자이센텀리체',                  supply:1780,prev:463, today:0},
+  {cat:'신규',name:'아산탕정자이메트로시티',            supply:1638,prev:1200,today:6},
+  {cat:'신규',name:'창원자이더스카이',                  supply:509, prev:128, today:5},
 ];
 
 /* 유틸 */
