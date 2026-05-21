@@ -371,6 +371,217 @@ const SC={x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:1
 
 Chart.register(ChartDataLabels);
 
+/* ═══════════════════════════════════════════════════════
+   구글 시트 연동 설정
+   ▶ SHEET_ID: 구글 시트 URL에서 복사
+     예) https://docs.google.com/spreadsheets/d/【여기】/edit
+   ═══════════════════════════════════════════════════════ */
+const SHEET_ID = '1hhc2XFoOFucz2GtyaYsmWSPddDGiKUVWf9RWFHz0qqc'; // ← 구글 시트 ID 입력
+
+const SHEET_URLS = {
+  단지정보:  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=단지정보`,
+  일별계약:  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=일별계약`,
+  누계현황:  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=누계현황`,
+};
+
+function parseCSV(text){
+  const rows=[];
+  const lines=text.split('\n');
+  for(const line of lines){
+    if(!line.trim())continue;
+    const cols=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+      else cur+=ch;
+    }
+    cols.push(cur.trim());
+    rows.push(cols);
+  }
+  return rows;
+}
+
+async function fetchSheet(name){
+  try{
+    const r=await fetch(SHEET_URLS[name]);
+    if(!r.ok)throw new Error('fetch fail');
+    const txt=await r.text();
+    const rows=parseCSV(txt);
+    return rows.slice(1).filter(r=>r[0]&&r[0]!=='');// 헤더 제외, 빈행 제거
+  }catch(e){console.warn(`[시트연동] ${name} 로드 실패:`,e);return null;}
+}
+
+/* 주차 자동 계산: 오늘 기준 이전 주(완결된 가장 최근 4주) 자동 생성 */
+function autoGenWeeks(refDateStr){
+  const ref=refDateStr?new Date(refDateStr.replace(/\//g,'-')):new Date();
+  // 이번 주 월요일 구하기
+  const day=ref.getDay();
+  const diff=day===0?-6:1-day;
+  const thisMonday=new Date(ref);
+  thisMonday.setDate(ref.getDate()+diff);
+  thisMonday.setHours(0,0,0,0);
+
+  const weeks=[];
+  for(let w=5;w>=0;w--){
+    const mon=new Date(thisMonday);
+    mon.setDate(thisMonday.getDate()-(w*7));
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    const label=`${6-w}주(${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()})`;
+    weeks.push({label,mon,sun});
+  }
+  return weeks; // [0]=6주 전(가장 오래됨) ~ [5]=이번 주
+}
+
+/* 일별계약 → 주간 values 자동 집계 */
+function buildWeeklyValues(weekDefs, dailyRows, projectNames){
+  // weekDefs: autoGenWeeks() 결과
+  // dailyRows: [[날짜,단지명,건수], ...]
+  const result={};
+  projectNames.forEach(n=>{result[n]=weekDefs.map(()=>null);});
+
+  dailyRows.forEach(([dateStr,name,cntStr])=>{
+    if(!dateStr||!name)return;
+    const cnt=parseInt(cntStr)||0;
+    if(!cnt)return;
+    const d=new Date(dateStr.replace(/\//g,'-'));
+    if(isNaN(d))return;
+    d.setHours(0,0,0,0);
+    weekDefs.forEach((wk,wi)=>{
+      const mon=new Date(wk.mon);mon.setHours(0,0,0,0);
+      const sun=new Date(wk.sun);sun.setHours(23,59,59,0);
+      if(d>=mon&&d<=sun){
+        if(result[name]){
+          result[name][wi]=(result[name][wi]||0)+cnt;
+        }
+      }
+    });
+  });
+  return result;
+}
+
+let sheetLoaded=false;
+let sheetLoadFailed=false;
+
+async function loadFromSheet(){
+  if(SHEET_ID==='1hhc2XFoOFucz2GtyaYsmWSPddDGiKUVWf9RWFHz0qqc'){
+    console.log('[시트연동] SHEET_ID 미설정 — 로컬 데이터 사용');
+    return false;
+  }
+  showLoadingBanner(true);
+  try{
+    const [단지rows, 일별rows, 누계rows] = await Promise.all([
+      fetchSheet('단지정보'),
+      fetchSheet('일별계약'),
+      fetchSheet('누계현황'),
+    ]);
+    if(!단지rows||!누계rows){sheetLoadFailed=true;showLoadingBanner(false);return false;}
+
+    // 기준일: 누계현황 시트 M1 (CSV 특성상 별도 fetch)
+    let refDate=dailyDate;
+    try{
+      const r2=await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=누계현황&range=M1`);
+      const t=await r2.text();const parsed=parseCSV(t);
+      if(parsed[0]&&parsed[0][0])refDate=parsed[0][0].replace(/-/g,'/').replace(/20(\d\d)\//,'$1/');
+    }catch(e){}
+
+    // 주차 자동 생성
+    const weekDefs=autoGenWeeks(refDate.length===8?'20'+refDate:refDate);
+    const newWeeks=weekDefs.map(w=>w.label);
+
+    // 단지 마스터
+    const projMap={};
+    단지rows.forEach(([name,cat,supply,bun,ip])=>{
+      if(!name)return;
+      projMap[name]={cat,supply:parseInt(supply)||0,bun:bun||'',ip:ip||''};
+    });
+
+    // 일별계약 → 주간 집계
+    const validDaily=(일별rows||[]).filter(r=>r[0]&&r[0]!=='예:');
+    const wvMap=buildWeeklyValues(weekDefs,validDaily,Object.keys(projMap));
+
+    // DEFAULT_PROJECTS 재구성
+    const newProjects=Object.entries(projMap).map(([name,info])=>({
+      cat:info.cat, name, bun:info.bun, ip:info.ip,
+      values:wvMap[name]||weekDefs.map(()=>null),
+    }));
+
+    // 누계현황 → dailyProjects 재구성
+    const newDailyProjects=[];
+    누계rows.forEach(([name,cat,supply,bun,ip,prev,today,,,,])=>{
+      if(!name||name==='합  계'||name==='합 계')return;
+      const p=parseInt(prev)||0;
+      const t=parseInt(today)||0;
+      newDailyProjects.push({
+        cat,name,
+        bun:bun||projMap[name]?.bun||'',
+        ip:ip||projMap[name]?.ip||'',
+        supply:parseInt(supply)||0,
+        prev:p, today:t
+      });
+    });
+
+    // 일별계약 → dailyLog 재구성
+    const logMap={};
+    validDaily.forEach(([dateStr,projName,cntStr])=>{
+      if(!dateStr||!projName)return;
+      const cnt=parseInt(cntStr)||0;
+      if(!cnt)return;
+      // 날짜 정규화 → YY/MM/DD
+      let dk=dateStr.replace(/-/g,'/');
+      if(dk.startsWith('20'))dk=dk.slice(2);
+      if(!logMap[dk])logMap[dk]={date:dk,total:0,bycat:{'집중관리':0,'일반':0,'공사비확보':0,'신규':0}};
+      logMap[dk].total+=cnt;
+      const cat=projMap[projName]?.cat||'일반';
+      if(logMap[dk].bycat[cat]!==undefined)logMap[dk].bycat[cat]+=cnt;
+    });
+    const newLog=Object.values(logMap).sort((a,b)=>a.date.localeCompare(b.date));
+
+    // 상태 업데이트
+    projects=newProjects;
+    weeks=newWeeks;
+    if(newDailyProjects.length)dailyProjects=newDailyProjects;
+    if(newLog.length)dailyLog=newLog;
+    dailyDate=refDate;
+
+    sheetLoaded=true;
+    showLoadingBanner(false);
+    showSheetBadge(true);
+    renderAll();
+    console.log('[시트연동] 로드 완료 ✅');
+    return true;
+  }catch(e){
+    console.error('[시트연동] 오류:',e);
+    sheetLoadFailed=true;
+    showLoadingBanner(false);
+    return false;
+  }
+}
+
+function showLoadingBanner(show){
+  let el=document.getElementById('sheetLoadBanner');
+  if(!el){
+    el=document.createElement('div');
+    el.id='sheetLoadBanner';
+    el.style.cssText='position:fixed;top:0;left:0;right:0;background:#1565c0;color:#fff;text-align:center;padding:8px;font-size:.78rem;font-weight:600;z-index:9999;letter-spacing:.03em;';
+    document.body.prepend(el);
+  }
+  el.style.display=show?'block':'none';
+  if(show)el.textContent='📡 구글 시트에서 최신 데이터를 불러오는 중...';
+}
+function showSheetBadge(ok){
+  let el=document.getElementById('sheetBadge');
+  if(!el){
+    el=document.createElement('div');
+    el.id='sheetBadge';
+    el.style.cssText='position:fixed;bottom:12px;right:12px;padding:5px 12px;border-radius:20px;font-size:.7rem;font-weight:700;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+    document.body.append(el);
+  }
+  el.style.background=ok?'#e8f5e9':'#fdecea';
+  el.style.color=ok?'#276221':'#c0392b';
+  el.textContent=ok?'✅ 시트 연동':'⚠ 로컬 데이터';
+}
+
 /* ═══ 주간 데이터: 월~일 기준 ═══ */
 const DEFAULT_WEEKS=['1주(4/20~4/26)','2주(4/27~5/3)','3주(5/4~5/10)','4주(5/11~5/17)','5주(5/18~5/24)','6주(5/25~5/31)'];
 const DEFAULT_PROJECTS=[
@@ -398,8 +609,8 @@ const DEFAULT_PROJECTS=[
   {cat:'신규',name:'창원자이더스카이',                 values:[null,null,null,46,9,null]},
 ];
 
-function loadSaved(){try{const s=localStorage.getItem('ctr_v12');if(s)return JSON.parse(s);}catch(e){}return null;}
-function saveSt(){try{localStorage.setItem('ctr_v12',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
+function loadSaved(){try{const s=localStorage.getItem('ctr_v13');if(s)return JSON.parse(s);}catch(e){}return null;}
+function saveSt(){try{localStorage.setItem('ctr_v13',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
 let sv=loadSaved();
 let weeks   =sv?sv.weeks   :JSON.parse(JSON.stringify(DEFAULT_WEEKS));
 let projects=sv?sv.projects:JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
@@ -769,24 +980,25 @@ function renderDRemain(){
 function renderDTable(){
   const filtered=dFTable==='all'?dailyProjects:dailyProjects.filter(p=>p.cat===dFTable);
   document.getElementById('dTableDate').textContent=dailyDate+' 기준';
-  document.getElementById('dTHead').innerHTML=`<th>단지명</th><th>분류</th><th>미분양</th><th>공급</th><th>전일누계</th><th>금일</th><th>누계</th><th>계약율</th>`;
+  document.getElementById('dTHead').innerHTML=`<th>단지명</th><th>분류</th><th>분양</th><th>입주</th><th>미분양</th><th>공급</th><th>전일누계</th><th>금일</th><th>누계</th><th>계약율</th>`;
   let rows='',ts=0,tprev=0,ttoday=0,tcum=0,tremain=0;
   (dFTable==='all'?CATS:[dFTable]).forEach(cat=>{
     const ps=filtered.filter(p=>p.cat===cat);if(!ps.length)return;
     const m=CM[cat];
     const cs=ps.reduce((a,p)=>a+p.supply,0),cc=ps.reduce((a,p)=>a+dcum(p),0),cr=ps.reduce((a,p)=>a+dremain(p),0);
-    if(dFTable==='all') rows+=`<tr class="sec-row"><td colspan="8">
+    if(dFTable==='all') rows+=`<tr class="sec-row"><td colspan="10">
       <span class="cb ${m.cls}">${cat}</span>
       <span class="meta-nums">미분양 <strong>${cr.toLocaleString()}</strong> &nbsp;·&nbsp; 공급 <strong>${cs.toLocaleString()}</strong> &nbsp;·&nbsp; 계약율 <strong>${cs>0?(cc/cs*100).toFixed(1):0}%</strong></span>
     </td></tr>`;
     ps.sort((a,b)=>dremain(b)-dremain(a)).forEach(p=>{
       const cum=dcum(p),rate=drate(p),rem=dremain(p),rn=parseFloat(rate);
       const rc=rn>=95?'tc-warn':rn>=80?'tc':'';
-      // 미분양: 완판은 muted, 그 외는 기본 텍스트 색 (강조는 bold만)
       const remStyle=rem===0?'color:var(--muted);font-weight:600':'font-weight:700;color:var(--text2)';
       rows+=`<tr>
         <td>${p.name}</td>
         <td><span class="cb ${m.cls}">${cat}</span></td>
+        <td style="text-align:center;color:var(--muted);font-size:.72rem">${p.bun||'-'}</td>
+        <td style="text-align:center;color:var(--muted);font-size:.72rem">${p.ip||'-'}</td>
         <td style="text-align:right;font-family:'DM Mono',monospace;${remStyle}">${rem===0?'완판':fmtN(rem)}</td>
         <td>${fmtN(p.supply)}</td><td>${fmtN(p.prev)}</td>
         <td class="${p.today>0?'today-col':''}">${p.today>0?'+'+p.today:'-'}</td>
@@ -797,7 +1009,7 @@ function renderDTable(){
     });
   });
   document.getElementById('dTBody').innerHTML=rows;
-  document.getElementById('dTFoot').innerHTML=`<td>합 계</td><td></td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:800;color:var(--ci)">${fmtN(tremain)}</td><td>${fmtN(ts)}</td><td>${fmtN(tprev)}</td><td class="today-col">${ttoday>0?'+'+ttoday:'-'}</td><td>${fmtN(tcum)}</td><td>${ts>0?(tcum/ts*100).toFixed(1):0}%</td>`;
+  document.getElementById('dTFoot').innerHTML=`<td>합 계</td><td></td><td></td><td></td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:800;color:var(--ci)">${fmtN(tremain)}</td><td>${fmtN(ts)}</td><td>${fmtN(tprev)}</td><td class="today-col">${ttoday>0?'+'+ttoday:'-'}</td><td>${fmtN(tcum)}</td><td>${ts>0?(tcum/ts*100).toFixed(1):0}%</td>`;
 }
 
 /* ═══ 주간 렌더 ═══ */
@@ -1032,7 +1244,10 @@ function showTab(id){
 function renderWeekly(){renderWeekSummary();renderTop3();renderWTrend();renderWBar();renderWTable();}
 function renderDaily(){renderTodayBig();renderTodayCard();renderRemainBig();renderRemainCatChart();renderDTrend();renderDRemain();renderDTable();}
 function renderAll(){renderWeekly();renderDaily();}
-renderAll();
+// 시트 연동: 페이지 로드 시 자동 fetch
+renderAll(); // 먼저 로컬 데이터로 렌더
+loadFromSheet(); // 시트에서 최신 데이터 로드 (비동기)
+
 </script>
 </body>
 </html>
