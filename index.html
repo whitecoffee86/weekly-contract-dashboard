@@ -371,260 +371,31 @@ const SC={x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:1
 
 Chart.register(ChartDataLabels);
 
-/* ═══════════════════════════════════════════════════════
-   구글 시트 연동 설정
-   ▶ SHEET_ID: 구글 시트 URL에서 복사
-     예) https://docs.google.com/spreadsheets/d/【여기】/edit
-   ═══════════════════════════════════════════════════════ */
-const SHEET_ID = '1hhc2XFoOFucz2GtyaYsmWSPddDGiKUVWf9RWFHz0qqc'; // ← 구글 시트 ID 입력
-
-const SHEET_URLS = {
-  단지정보:  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=단지정보`,
-  일별계약:  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=일별계약`,
-  누계현황:  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=누계현황`,
-};
-
-function parseCSV(text){
-  const rows=[];
-  const lines=text.split('\n');
-  for(const line of lines){
-    if(!line.trim())continue;
-    const cols=[];let cur='',inQ=false;
-    for(let i=0;i<line.length;i++){
-      const ch=line[i];
-      if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
-      else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
-      else cur+=ch;
-    }
-    cols.push(cur.trim());
-    rows.push(cols);
-  }
-  return rows;
-}
-
-async function fetchSheet(name){
-  try{
-    const r=await fetch(SHEET_URLS[name]);
-    if(!r.ok)throw new Error('fetch fail');
-    const txt=await r.text();
-    const rows=parseCSV(txt);
-    return rows.slice(1).filter(r=>r[0]&&r[0]!=='');// 헤더 제외, 빈행 제거
-  }catch(e){console.warn(`[시트연동] ${name} 로드 실패:`,e);return null;}
-}
-
-/* 주차 자동 계산: 오늘 기준 이전 주(완결된 가장 최근 4주) 자동 생성 */
-function autoGenWeeks(refDateStr){
-  const ref=refDateStr?new Date(refDateStr.replace(/\//g,'-')):new Date();
-  // 이번 주 월요일 구하기
-  const day=ref.getDay();
-  const diff=day===0?-6:1-day;
-  const thisMonday=new Date(ref);
-  thisMonday.setDate(ref.getDate()+diff);
-  thisMonday.setHours(0,0,0,0);
-
-  const weeks=[];
-  for(let w=5;w>=0;w--){
-    const mon=new Date(thisMonday);
-    mon.setDate(thisMonday.getDate()-(w*7));
-    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
-    const label=`${6-w}주(${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()})`;
-    weeks.push({label,mon,sun});
-  }
-  return weeks; // [0]=6주 전(가장 오래됨) ~ [5]=이번 주
-}
-
-/* 일별계약 → 주간 values 자동 집계 */
-function buildWeeklyValues(weekDefs, dailyRows, projectNames){
-  // weekDefs: autoGenWeeks() 결과
-  // dailyRows: [[날짜,단지명,건수], ...]
-  const result={};
-  projectNames.forEach(n=>{result[n]=weekDefs.map(()=>null);});
-
-  dailyRows.forEach(([dateStr,name,cntStr])=>{
-    if(!dateStr||!name)return;
-    const cnt=parseInt(cntStr)||0;
-    if(!cnt)return;
-    const d=new Date(dateStr.replace(/\//g,'-'));
-    if(isNaN(d))return;
-    d.setHours(0,0,0,0);
-    weekDefs.forEach((wk,wi)=>{
-      const mon=new Date(wk.mon);mon.setHours(0,0,0,0);
-      const sun=new Date(wk.sun);sun.setHours(23,59,59,0);
-      if(d>=mon&&d<=sun){
-        if(result[name]){
-          result[name][wi]=(result[name][wi]||0)+cnt;
-        }
-      }
-    });
-  });
-  return result;
-}
-
-let sheetLoaded=false;
-let sheetLoadFailed=false;
-
-async function loadFromSheet(){
-  if(SHEET_ID==='YOUR_SHEET_ID_HERE'){
-    console.log('[시트연동] SHEET_ID 미설정 — 로컬 데이터 사용');
-    return false;
-  }
-  showLoadingBanner(true);
-  try{
-    const [단지rows, 일별rows, 누계rows] = await Promise.all([
-      fetchSheet('단지정보'),
-      fetchSheet('일별계약'),
-      fetchSheet('누계현황'),
-    ]);
-    if(!단지rows||!누계rows){sheetLoadFailed=true;showLoadingBanner(false);return false;}
-
-    // 기준일: 누계현황 헤더행 index[12]에 있음
-    let refDate=dailyDate;
-    if(누계rows.length>0){
-      // fetchSheet는 헤더 제외하므로 원본에서 직접 읽어야 함
-      // 대신 별도 fetch로 헤더행 포함 전체 읽기
-      try{
-        const r2=await fetch(SHEET_URLS['누계현황']);
-        const t=await r2.text();
-        const allRows=parseCSV(t);
-        // 헤더행(index 0)의 [12]에 날짜
-        if(allRows[0]&&allRows[0][12]){
-          refDate=allRows[0][12].trim().replace(/-/g,'/');
-          if(refDate.startsWith('20'))refDate=refDate.slice(2);
-        }
-      }catch(e){console.warn('기준일 읽기 실패',e);}
-    }
-
-    // 주차 자동 생성
-    const weekDefs=autoGenWeeks(refDate.length===8?'20'+refDate:refDate);
-    const newWeeks=weekDefs.map(w=>w.label);
-
-    // 단지 마스터 (단지정보 시트: [0]단지명 [1]카테고리 [2]공급 [3]분양 [4]입주)
-    const projMap={};
-    단지rows.forEach(row=>{
-      const name=(row[0]||'').trim();
-      if(!name)return;
-      projMap[name]={
-        cat:(row[1]||'일반').trim(),
-        supply:parseInt(row[2])||0,
-        bun:(row[3]||'').trim(),
-        ip:(row[4]||'').trim()
-      };
-    });
-
-    // 일별계약 → 주간 집계 (일별계약 시트: [0]날짜 [1]단지명 [2]금일계약)
-    const validDaily=(일별rows||[]).filter(r=>{
-      const d=(r[0]||'').trim();
-      return d && !d.startsWith('예:') && !d.startsWith('←');
-    });
-    const wvMap=buildWeeklyValues(weekDefs,validDaily.map(r=>[r[0],r[1],r[2]]),Object.keys(projMap));
-
-    // DEFAULT_PROJECTS 재구성
-    const newProjects=Object.entries(projMap).map(([name,info])=>({
-      cat:info.cat, name, bun:info.bun, ip:info.ip,
-      values:wvMap[name]||weekDefs.map(()=>null),
-    }));
-
-    // 누계현황 → dailyProjects 재구성
-    // 컬럼: [0]단지명 [1]카테고리 [2]공급 [3]분양 [4]입주 [5]전일누계 [6]금일 [7]누계 [8]계약율 [9]잔여
-    const newDailyProjects=[];
-    누계rows.forEach(row=>{
-      const name=(row[0]||'').trim();
-      if(!name||name==='합  계'||name==='합 계'||name==='단지명')return;
-      const cat=(row[1]||'일반').trim();
-      const supply=parseInt(row[2])||0;
-      const bun=(row[3]||'').trim();
-      const ip=(row[4]||'').trim();
-      const prev=parseInt(row[5])||0;
-      const today=parseInt(row[6])||0;
-      newDailyProjects.push({cat,name,bun,ip,supply,prev,today});
-    });
-
-    // 일별계약 → dailyLog 재구성
-    const logMap={};
-    validDaily.forEach(([dateStr,projName,cntStr])=>{
-      if(!dateStr||!projName)return;
-      const cnt=parseInt(cntStr)||0;
-      if(!cnt)return;
-      // 날짜 정규화 → YY/MM/DD
-      let dk=dateStr.replace(/-/g,'/');
-      if(dk.startsWith('20'))dk=dk.slice(2);
-      if(!logMap[dk])logMap[dk]={date:dk,total:0,bycat:{'집중관리':0,'일반':0,'공사비확보':0,'신규':0}};
-      logMap[dk].total+=cnt;
-      const cat=projMap[projName]?.cat||'일반';
-      if(logMap[dk].bycat[cat]!==undefined)logMap[dk].bycat[cat]+=cnt;
-    });
-    const newLog=Object.values(logMap).sort((a,b)=>a.date.localeCompare(b.date));
-
-    // 상태 업데이트
-    projects=newProjects;
-    weeks=newWeeks;
-    if(newDailyProjects.length)dailyProjects=newDailyProjects;
-    if(newLog.length)dailyLog=newLog;
-    dailyDate=refDate;
-
-    sheetLoaded=true;
-    showLoadingBanner(false);
-    showSheetBadge(true);
-    renderAll();
-    console.log('[시트연동] 로드 완료 ✅');
-    return true;
-  }catch(e){
-    console.error('[시트연동] 오류:',e);
-    sheetLoadFailed=true;
-    showLoadingBanner(false);
-    return false;
-  }
-}
-
-function showLoadingBanner(show){
-  let el=document.getElementById('sheetLoadBanner');
-  if(!el){
-    el=document.createElement('div');
-    el.id='sheetLoadBanner';
-    el.style.cssText='position:fixed;top:0;left:0;right:0;background:#1565c0;color:#fff;text-align:center;padding:8px;font-size:.78rem;font-weight:600;z-index:9999;letter-spacing:.03em;';
-    document.body.prepend(el);
-  }
-  el.style.display=show?'block':'none';
-  if(show)el.textContent='📡 구글 시트에서 최신 데이터를 불러오는 중...';
-}
-function showSheetBadge(ok){
-  let el=document.getElementById('sheetBadge');
-  if(!el){
-    el=document.createElement('div');
-    el.id='sheetBadge';
-    el.style.cssText='position:fixed;bottom:12px;right:12px;padding:5px 12px;border-radius:20px;font-size:.7rem;font-weight:700;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.15);';
-    document.body.append(el);
-  }
-  el.style.background=ok?'#e8f5e9':'#fdecea';
-  el.style.color=ok?'#276221':'#c0392b';
-  el.textContent=ok?'✅ 시트 연동':'⚠ 로컬 데이터';
-}
-
 /* ═══ 주간 데이터: 월~일 기준 ═══ */
-const DEFAULT_WEEKS=['1주(4/20~4/26)','2주(4/27~5/3)','3주(5/4~5/10)','4주(5/11~5/17)','5주(5/18~5/24)','6주(5/25~5/31)'];
+const DEFAULT_WEEKS=['1주(4/27~5/3)','2주(5/4~5/10)','3주(5/11~5/17)','4주(5/18~5/24)','5주(5/25~5/31)','6주(6/1~6/7)'];
 const DEFAULT_PROJECTS=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',      values:[null,null,null,null,null,null]},
-  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[null,-1,null,null,null,null]},
-  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[2,1,-1,null,null,null]},
-  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[null,2,null,1,null,null]},
+  {cat:'집중관리',name:'아산자이그랜드파크(충남)',       values:[-1,null,null,null,null,null]},
+  {cat:'집중관리',name:'범어자이오피스텔(대구)',        values:[1,-1,null,null,null,null]},
+  {cat:'집중관리',name:'원주자이센트로(강원)',          values:[2,null,1,null,null,null]},
   {cat:'일반',name:'별내자이더스타이그제큐티브',        values:[null,null,null,null,null,null]},
   {cat:'일반',name:'은평자이더스타',                    values:[null,null,null,null,null,null]},
   {cat:'일반',name:'운암자이포레나퍼스티체',            values:[null,null,null,null,null,null]},
-  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[null,1,8,2,null,null]},
-  {cat:'일반',name:'도룡자이라피크(대전)',              values:[1,null,1,null,null,null]},
-  {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,null,-5,30,2,null]},
-  {cat:'일반',name:'수지자이에디시온(경기)',            values:[14,22,32,21,12,null]},
-  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[19,17,4,2,null,null]},
-  {cat:'일반',name:'구리역 하이니티 리버파크',         values:[null,53,5,1,null,null]},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',          values:[1,8,2,2,null,null]},
+  {cat:'일반',name:'도룡자이라피크(대전)',              values:[null,1,null,null,2,null]},
+  {cat:'일반',name:'안양자이헤리티온(경기)',            values:[null,-5,30,2,null,null]},
+  {cat:'일반',name:'수지자이에디시온(경기)',            values:[22,32,21,34,5,null]},
+  {cat:'일반',name:'북오산자이리버블시티(경기)',        values:[17,4,2,null,null,null]},
+  {cat:'일반',name:'구리역 하이니티 리버파크',         values:[53,5,1,null,null,null]},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',      values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'여주역자이헤리티지',          values:[null,null,null,null,null,null]},
-  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[2,null,null,null,null,null]},
+  {cat:'공사비확보',name:'순천그랜드파크자이',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'성성자이레이크파크',          values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',  values:[null,null,null,null,null,null]},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',  values:[null,null,null,null,null,null]},
   {cat:'신규',name:'도안자이센텀리체',                 values:[null,null,null,null,null,null]},
-  {cat:'신규',name:'아산탕정자이메트로시티',           values:[null,null,null,89,19,null]},
-  {cat:'신규',name:'창원자이더스카이',                 values:[null,null,null,46,9,null]},
+  {cat:'신규',name:'아산탕정자이메트로시티',           values:[null,null,89,37,4,null]},
+  {cat:'신규',name:'창원자이더스카이',                 values:[null,null,46,62,16,null]},
 ];
 
 function loadSaved(){try{const s=localStorage.getItem('ctr_v13');if(s)return JSON.parse(s);}catch(e){}return null;}
@@ -676,11 +447,16 @@ const DEFAULT_DAILY_LOG=[
   {date:'26/05/18',total:22, bycat:{'집중관리':0,'일반':11,'공사비확보':0,'신규':11}},
   {date:'26/05/19',total:8,  bycat:{'집중관리':0,'일반':2, '공사비확보':0,'신규':6}},
   {date:'26/05/20',total:12, bycat:{'집중관리':0,'일반':1, '공사비확보':0,'신규':11}},
+  {date:'26/05/21',total:14, bycat:{'집중관리':0,'일반':6, '공사비확보':0,'신규':8}},
+  {date:'26/05/22',total:20, bycat:{'집중관리':0,'일반':5, '공사비확보':0,'신규':15}},
+  {date:'26/05/23',total:35, bycat:{'집중관리':0,'일반':8, '공사비확보':0,'신규':27}},
+  {date:'26/05/24',total:26, bycat:{'집중관리':0,'일반':5, '공사비확보':0,'신규':21}},
+  {date:'26/05/25',total:27, bycat:{'집중관리':0,'일반':7, '공사비확보':0,'신규':20}},
 ];
 let dailyLog=sv&&sv.dailyLog&&sv.dailyLog.length?sv.dailyLog:JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
 
 /* 일간 데이터 */
-let dailyDate="26/05/20";
+let dailyDate="26/05/25";
 let dailyProjects=[
   {cat:'집중관리',name:'음성자이센트럴시티(충북)',       supply:1505,prev:904, today:0},
   {cat:'집중관리',name:'아산자이그랜드파크(충남)',        supply:1588,prev:1102,today:0},
@@ -689,10 +465,10 @@ let dailyProjects=[
   {cat:'일반',name:'별내자이더스타이그제큐티브',         supply:604, prev:603, today:0},
   {cat:'일반',name:'은평자이더스타',                     supply:227, prev:220, today:0},
   {cat:'일반',name:'운암자이포레나퍼스티체',             supply:566, prev:565, today:0},
-  {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:271, today:0},
-  {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:272, today:0},
-  {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:631, today:1},
-  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:405, today:0},
+  {cat:'일반',name:'양산자이파크팰리체(경남)',           supply:842, prev:273, today:0},
+  {cat:'일반',name:'도룡자이라피크(대전)',               supply:299, prev:272, today:2},
+  {cat:'일반',name:'안양자이헤리티온(경기)',             supply:639, prev:632, today:0},
+  {cat:'일반',name:'수지자이에디시온(경기)',             supply:480, prev:427, today:5},
   {cat:'일반',name:'북오산자이리버블시티(경기)',         supply:1275,prev:1241,today:0},
   {cat:'일반',name:'구리역 하이니티 리버파크',          supply:505, prev:408, today:0},
   {cat:'공사비확보',name:'대구역자이더스타(대구)',       supply:424, prev:423, today:0},
@@ -702,8 +478,8 @@ let dailyProjects=[
   {cat:'공사비확보',name:'아산탕정자이퍼스트시티(1BL)',   supply:797, prev:730, today:0},
   {cat:'공사비확보',name:'아산탕정자이센트럴시티(2BL)',   supply:1238,prev:1202,today:0},
   {cat:'신규',name:'도안자이센텀리체',                  supply:1780,prev:463, today:0},
-  {cat:'신규',name:'아산탕정자이메트로시티',            supply:1638,prev:1200,today:6},
-  {cat:'신규',name:'창원자이더스카이',                  supply:509, prev:128, today:5},
+  {cat:'신규',name:'아산탕정자이메트로시티',            supply:1638,prev:1224,today:4},
+  {cat:'신규',name:'창원자이더스카이',                  supply:509, prev:186, today:16},
 ];
 
 /* 유틸 */
@@ -998,25 +774,24 @@ function renderDRemain(){
 function renderDTable(){
   const filtered=dFTable==='all'?dailyProjects:dailyProjects.filter(p=>p.cat===dFTable);
   document.getElementById('dTableDate').textContent=dailyDate+' 기준';
-  document.getElementById('dTHead').innerHTML=`<th>단지명</th><th>분류</th><th>분양</th><th>입주</th><th>미분양</th><th>공급</th><th>전일누계</th><th>금일</th><th>누계</th><th>계약율</th>`;
+  document.getElementById('dTHead').innerHTML=`<th>단지명</th><th>분류</th><th>미분양</th><th>공급</th><th>전일누계</th><th>금일</th><th>누계</th><th>계약율</th>`;
   let rows='',ts=0,tprev=0,ttoday=0,tcum=0,tremain=0;
   (dFTable==='all'?CATS:[dFTable]).forEach(cat=>{
     const ps=filtered.filter(p=>p.cat===cat);if(!ps.length)return;
     const m=CM[cat];
     const cs=ps.reduce((a,p)=>a+p.supply,0),cc=ps.reduce((a,p)=>a+dcum(p),0),cr=ps.reduce((a,p)=>a+dremain(p),0);
-    if(dFTable==='all') rows+=`<tr class="sec-row"><td colspan="10">
+    if(dFTable==='all') rows+=`<tr class="sec-row"><td colspan="8">
       <span class="cb ${m.cls}">${cat}</span>
       <span class="meta-nums">미분양 <strong>${cr.toLocaleString()}</strong> &nbsp;·&nbsp; 공급 <strong>${cs.toLocaleString()}</strong> &nbsp;·&nbsp; 계약율 <strong>${cs>0?(cc/cs*100).toFixed(1):0}%</strong></span>
     </td></tr>`;
     ps.sort((a,b)=>dremain(b)-dremain(a)).forEach(p=>{
       const cum=dcum(p),rate=drate(p),rem=dremain(p),rn=parseFloat(rate);
       const rc=rn>=95?'tc-warn':rn>=80?'tc':'';
+      // 미분양: 완판은 muted, 그 외는 기본 텍스트 색 (강조는 bold만)
       const remStyle=rem===0?'color:var(--muted);font-weight:600':'font-weight:700;color:var(--text2)';
       rows+=`<tr>
         <td>${p.name}</td>
         <td><span class="cb ${m.cls}">${cat}</span></td>
-        <td style="text-align:center;color:var(--muted);font-size:.72rem">${p.bun||'-'}</td>
-        <td style="text-align:center;color:var(--muted);font-size:.72rem">${p.ip||'-'}</td>
         <td style="text-align:right;font-family:'DM Mono',monospace;${remStyle}">${rem===0?'완판':fmtN(rem)}</td>
         <td>${fmtN(p.supply)}</td><td>${fmtN(p.prev)}</td>
         <td class="${p.today>0?'today-col':''}">${p.today>0?'+'+p.today:'-'}</td>
@@ -1027,7 +802,7 @@ function renderDTable(){
     });
   });
   document.getElementById('dTBody').innerHTML=rows;
-  document.getElementById('dTFoot').innerHTML=`<td>합 계</td><td></td><td></td><td></td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:800;color:var(--ci)">${fmtN(tremain)}</td><td>${fmtN(ts)}</td><td>${fmtN(tprev)}</td><td class="today-col">${ttoday>0?'+'+ttoday:'-'}</td><td>${fmtN(tcum)}</td><td>${ts>0?(tcum/ts*100).toFixed(1):0}%</td>`;
+  document.getElementById('dTFoot').innerHTML=`<td>합 계</td><td></td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:800;color:var(--ci)">${fmtN(tremain)}</td><td>${fmtN(ts)}</td><td>${fmtN(tprev)}</td><td class="today-col">${ttoday>0?'+'+ttoday:'-'}</td><td>${fmtN(tcum)}</td><td>${ts>0?(tcum/ts*100).toFixed(1):0}%</td>`;
 }
 
 /* ═══ 주간 렌더 ═══ */
@@ -1262,10 +1037,7 @@ function showTab(id){
 function renderWeekly(){renderWeekSummary();renderTop3();renderWTrend();renderWBar();renderWTable();}
 function renderDaily(){renderTodayBig();renderTodayCard();renderRemainBig();renderRemainCatChart();renderDTrend();renderDRemain();renderDTable();}
 function renderAll(){renderWeekly();renderDaily();}
-// 시트 연동: 페이지 로드 시 자동 fetch
-renderAll(); // 먼저 로컬 데이터로 렌더
-loadFromSheet(); // 시트에서 최신 데이터 로드 (비동기)
-
+renderAll();
 </script>
 </body>
 </html>
