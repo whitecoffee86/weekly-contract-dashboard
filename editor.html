@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>계약 데이터 에디터</title>
+<style>
+:root{
+  --bg:#f5f6f8;--surface:#fff;--border:#e2e5ea;--border2:#c8cdd5;
+  --text:#1a1e2a;--text2:#3a4050;--muted:#7a8294;
+  --accent:#1565c0;--accent-bg:#e8f0fb;
+  --cj:#c0392b;--cj-bg:#fdecea;--cj-border:#e8c0c0;
+  --ci:#1565c0;--ci-bg:#e8f0fb;--ci-border:#bdd0ee;
+  --cg:#276221;--cg-bg:#e8f5e9;--cg-border:#b0d8c0;
+  --cs:#d35400;--cs-bg:#fef0e7;--cs-border:#ddd0a8;
+  --green:#1b7e4b;--green-bg:#e6f4ec;
+  --red:#c0392b;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:1.5rem}
+h1{font-size:1.3rem;font-weight:700;margin-bottom:.25rem}
+.subtitle{font-size:.78rem;color:var(--muted);margin-bottom:1.5rem}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1rem}
+.section-title{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.section-title span{background:var(--accent);color:#fff;border-radius:4px;padding:1px 7px;font-size:.68rem}
+
+/* 날짜 */
+.date-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.date-row label{font-size:.82rem;font-weight:600;color:var(--text2)}
+.date-input{padding:.45rem .75rem;border:1px solid var(--border2);border-radius:6px;font-size:.9rem;font-family:inherit;width:160px}
+.date-input:focus{outline:none;border-color:var(--accent)}
+.today-btn{padding:.42rem .9rem;background:var(--accent-bg);color:var(--accent);border:1px solid var(--ci-border);border-radius:6px;font-size:.76rem;font-weight:600;cursor:pointer}
+.today-btn:hover{background:#d0e4f8}
+
+/* 단지 입력 테이블 */
+.proj-table{width:100%;border-collapse:collapse}
+.proj-table th{font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;padding:.4rem .6rem;text-align:left;border-bottom:2px solid var(--border);background:var(--bg)}
+.proj-table th.num{text-align:right}
+.proj-table td{padding:.35rem .6rem;border-bottom:1px solid var(--border);vertical-align:middle}
+.proj-table tr:last-child td{border-bottom:none}
+.proj-table tr:hover td{background:#fafbfc}
+
+.cat-badge{display:inline-block;font-size:.63rem;font-weight:700;padding:2px 6px;border-radius:3px;white-space:nowrap}
+.cat-집중관리{background:var(--cj-bg);color:var(--cj);border:1px solid var(--cj-border)}
+.cat-일반{background:var(--ci-bg);color:var(--ci);border:1px solid var(--ci-border)}
+.cat-공사비확보{background:var(--cg-bg);color:var(--cg);border:1px solid var(--cg-border)}
+.cat-신규{background:var(--cs-bg);color:var(--cs);border:1px solid var(--cs-border)}
+
+.proj-name{font-size:.82rem;font-weight:500}
+.num-cell{text-align:right;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.today-input{width:70px;padding:.3rem .5rem;border:1px solid var(--border2);border-radius:5px;font-size:.85rem;text-align:right;font-family:inherit;color:var(--text)}
+.today-input:focus{outline:none;border-color:var(--accent);background:var(--accent-bg)}
+.today-input.has-value{border-color:#1b7e4b;background:#e6f4ec;color:#1b7e4b;font-weight:700}
+.total-cell{font-size:.82rem;font-weight:600;color:var(--text);text-align:right;font-variant-numeric:tabular-nums}
+.rate-cell{font-size:.75rem;color:var(--muted);text-align:right}
+
+/* 구분선 행 */
+.cat-sep td{background:var(--bg);padding:.25rem .6rem}
+.cat-sep-label{font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.05em}
+
+/* 요약 바 */
+.summary-bar{display:flex;gap:1.5rem;flex-wrap:wrap;padding:.75rem 1rem;background:var(--bg);border-radius:8px;margin-top:1rem;border:1px solid var(--border)}
+.summary-item{display:flex;flex-direction:column;gap:2px}
+.summary-label{font-size:.67rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.summary-value{font-size:1.1rem;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.summary-value.accent{color:var(--accent)}
+.summary-value.green{color:var(--green)}
+
+/* 주간 슬라이딩 알림 */
+.slide-notice{display:none;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:.75rem 1rem;margin-top:.75rem;font-size:.8rem;color:#7c5c00;align-items:center;gap:.5rem}
+.slide-notice.show{display:flex}
+.slide-notice strong{font-weight:700}
+
+/* 다운로드 버튼 */
+.btn-area{display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;align-items:center}
+.btn{padding:.55rem 1.25rem;border-radius:7px;font-size:.82rem;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-download{background:var(--accent);color:#fff;font-size:.9rem;padding:.65rem 1.75rem}
+.btn-download:hover{background:#1e4480}
+.btn-download:disabled{background:#aaa;cursor:not-allowed}
+.btn-reset{background:var(--surface);color:var(--muted);border:1px solid var(--border2)}
+.btn-reset:hover{background:var(--bg)}
+
+/* 미리보기 */
+.preview-box{background:#1e2433;color:#e2e8f0;border-radius:8px;padding:1rem 1.25rem;font-family:'DM Mono','Courier New',monospace;font-size:.72rem;line-height:1.6;max-height:280px;overflow-y:auto;margin-top:.75rem;display:none}
+.preview-box.show{display:block}
+.preview-toggle{font-size:.74rem;color:var(--accent);cursor:pointer;text-decoration:underline;margin-top:.5rem;display:inline-block}
+
+/* 사용법 */
+.how-to{background:#f0f7ff;border:1px solid #bdd0ee;border-radius:8px;padding:1rem 1.25rem;font-size:.78rem;color:#1a3a5c;line-height:1.8}
+.how-to ol{padding-left:1.2rem}
+.how-to li{margin-bottom:.2rem}
+.how-to strong{font-weight:700}
+
+/* 로딩 */
+#loading{text-align:center;padding:3rem;color:var(--muted);font-size:.9rem}
+#main{display:none}
+</style>
+</head>
+<body>
+
+<div id="loading">⏳ data.json 불러오는 중...</div>
+
+<div id="main">
+<h1>📋 계약 데이터 에디터</h1>
+<p class="subtitle">날짜와 금일 계약 수를 입력하고 data.json을 다운로드하세요.</p>
+
+<!-- 사용법 -->
+<div class="section">
+  <div class="section-title">📖 사용법</div>
+  <div class="how-to">
+    <ol>
+      <li>날짜를 입력하세요 (오늘 날짜 버튼으로 자동 입력 가능)</li>
+      <li>계약이 발생한 단지의 <strong>금일</strong> 칸에 숫자를 입력하세요</li>
+      <li><strong>data.json 다운로드</strong> 버튼을 클릭하세요</li>
+      <li>GitHub 레포지토리에서 <code>data.json</code> 파일을 교체하세요</li>
+    </ol>
+  </div>
+</div>
+
+<!-- 날짜 입력 -->
+<div class="section">
+  <div class="section-title">📅 기준 날짜 <span>STEP 1</span></div>
+  <div class="date-row">
+    <label>날짜</label>
+    <input type="date" id="dateInput" class="date-input">
+    <button class="today-btn" onclick="setToday()">오늘 날짜</button>
+    <span id="dateDisplay" style="font-size:.82rem;color:var(--muted)"></span>
+  </div>
+  <div class="slide-notice" id="slideNotice">
+    <span>🔄</span>
+    <div><strong>주간 슬라이딩 발생!</strong> 월요일이 입력되었습니다. 주차가 한 칸 밀려납니다. — <span id="slideDetail"></span></div>
+  </div>
+</div>
+
+<!-- 단지별 입력 -->
+<div class="section">
+  <div class="section-title">🏢 단지별 금일 계약 수 <span>STEP 2</span></div>
+  <table class="proj-table" id="projTable">
+    <thead>
+      <tr>
+        <th style="width:80px">분류</th>
+        <th>단지명</th>
+        <th class="num" style="width:70px">공급</th>
+        <th class="num" style="width:80px">전일누계</th>
+        <th class="num" style="width:80px">금일</th>
+        <th class="num" style="width:80px">누계</th>
+        <th class="num" style="width:65px">계약률</th>
+      </tr>
+    </thead>
+    <tbody id="projBody"></tbody>
+  </table>
+
+  <!-- 요약 -->
+  <div class="summary-bar">
+    <div class="summary-item">
+      <div class="summary-label">금일 계약</div>
+      <div class="summary-value accent" id="sumToday">0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">총 누계</div>
+      <div class="summary-value" id="sumTotal">0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">집중관리</div>
+      <div class="summary-value" id="sumCj" style="color:var(--cj)">0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">일반</div>
+      <div class="summary-value" id="sumCi" style="color:var(--ci)">0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">공사비확보</div>
+      <div class="summary-value" id="sumCg" style="color:var(--cg)">0</div>
+    </div>
+    <div class="summary-item">
+      <div class="summary-label">신규</div>
+      <div class="summary-value" id="sumCs" style="color:var(--cs)">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- 다운로드 -->
+<div class="section">
+  <div class="section-title">⬇️ 다운로드 <span>STEP 3</span></div>
+  <div class="btn-area">
+    <button class="btn btn-download" id="downloadBtn" onclick="downloadJSON()">📥 data.json 다운로드</button>
+    <button class="btn btn-reset" onclick="resetToday()">↩ 금일 초기화</button>
+  </div>
+  <span class="preview-toggle" onclick="togglePreview()">▶ JSON 미리보기</span>
+  <pre class="preview-box" id="previewBox"></pre>
+</div>
+
+</div><!-- #main -->
+
+<script>
+// ── 전역 상태 ──────────────────────────────────────────
+let DATA = null;        // 원본 data.json
+let currentDate = '';   // 현재 입력 날짜 (YY/MM/DD)
+
+// ── 초기화 ─────────────────────────────────────────────
+async function init() {
+  try {
+    const res = await fetch('data.json?v=' + Date.now());
+    DATA = await res.json();
+  } catch(e) {
+    alert('❌ data.json을 불러오지 못했습니다.\neditor.html과 data.json이 같은 폴더에 있는지 확인하세요.');
+    document.getElementById('loading').textContent = '❌ data.json 로드 실패';
+    return;
+  }
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  setToday();
+  renderTable();
+}
+
+// ── 날짜 유틸 ──────────────────────────────────────────
+function setToday() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth()+1, d = now.getDate();
+  document.getElementById('dateInput').value =
+    `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  onDateChange();
+}
+
+function inputToYYMMDD(val) {
+  // val: "2026-06-08"
+  if (!val) return '';
+  const [y,m,d] = val.split('-');
+  return `${String(y).slice(2)}/${m}/${d}`;
+}
+
+function yymmddToInput(s) {
+  // s: "26/06/08"
+  if (!s) return '';
+  const [y,m,d] = s.split('/');
+  return `20${y}-${m}-${d}`;
+}
+
+function getMonday(dateStr) {
+  // dateStr: "26/06/08"
+  const [y,m,d] = dateStr.split('/');
+  const dt = new Date(2000+parseInt(y), parseInt(m)-1, parseInt(d));
+  const day = dt.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const mon = new Date(dt); mon.setDate(dt.getDate() + diff);
+  return mon;
+}
+
+function parseWeekStart(label) {
+  const match = label.match(/\((\d+)\/(\d+)~/);
+  if (!match) return null;
+  return new Date(2026, parseInt(match[1])-1, parseInt(match[2]));
+}
+
+function formatWeek(mon) {
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return `${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;
+}
+
+function isMonday(dateStr) {
+  const [y,m,d] = dateStr.split('/');
+  const dt = new Date(2000+parseInt(y), parseInt(m)-1, parseInt(d));
+  return dt.getDay() === 1;
+}
+
+function onDateChange() {
+  const val = document.getElementById('dateInput').value;
+  currentDate = inputToYYMMDD(val);
+
+  // 날짜 표시
+  if (currentDate) {
+    const [y,m,d] = currentDate.split('/');
+    const dt = new Date(2000+parseInt(y), parseInt(m)-1, parseInt(d));
+    const DOW = ['일','월','화','수','목','금','토'];
+    document.getElementById('dateDisplay').textContent =
+      `20${y}년 ${parseInt(m)}월 ${parseInt(d)}일 (${DOW[dt.getDay()]})`;
+  }
+
+  // 월요일이면 슬라이딩 안내
+  const notice = document.getElementById('slideNotice');
+  if (currentDate && isMonday(currentDate)) {
+    const mon = getMonday(currentDate);
+    const weekLabel = formatWeek(mon);
+    const oldFirst = DATA.weeks[0];
+    document.getElementById('slideDetail').textContent =
+      `"${oldFirst}" 제거 → 신규 주차 "?(${weekLabel})" 추가`;
+    notice.classList.add('show');
+  } else {
+    notice.classList.remove('show');
+  }
+
+  updateSummary();
+  if (document.getElementById('previewBox').classList.contains('show')) {
+    document.getElementById('previewBox').textContent = generateJSON();
+  }
+}
+
+// ── 테이블 렌더링 ───────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('projBody');
+  const cats = ['집중관리','일반','공사비확보','신규'];
+  let html = '';
+
+  cats.forEach(cat => {
+    const projs = DATA.dailyProjects.filter(p => p.cat === cat);
+    if (!projs.length) return;
+
+    // 카테고리 구분행
+    html += `<tr class="cat-sep"><td colspan="7"><span class="cat-badge cat-${cat}">${cat}</span></td></tr>`;
+
+    projs.forEach((p, idx) => {
+      const globalIdx = DATA.dailyProjects.indexOf(p);
+      const cum = p.prev + p.today;
+      const rate = p.supply > 0 ? ((cum / p.supply)*100).toFixed(1) : '0.0';
+      const hasVal = p.today > 0;
+      html += `
+        <tr>
+          <td></td>
+          <td class="proj-name">${p.name}</td>
+          <td class="num-cell">${p.supply.toLocaleString()}</td>
+          <td class="num-cell">${p.prev.toLocaleString()}</td>
+          <td style="text-align:right">
+            <input type="number" min="0" class="today-input${hasVal?' has-value':''}"
+              value="${p.today || ''}"
+              placeholder="0"
+              data-idx="${globalIdx}"
+              oninput="onTodayInput(this)">
+          </td>
+          <td class="total-cell" id="total-${globalIdx}">${cum.toLocaleString()}</td>
+          <td class="rate-cell" id="rate-${globalIdx}">${rate}%</td>
+        </tr>`;
+    });
+  });
+
+  tbody.innerHTML = html;
+  updateSummary();
+}
+
+function onTodayInput(el) {
+  const idx = parseInt(el.dataset.idx);
+  const val = parseInt(el.value) || 0;
+  DATA.dailyProjects[idx].today = val;
+
+  // 스타일
+  el.classList.toggle('has-value', val > 0);
+
+  // 누계/계약률 업데이트
+  const p = DATA.dailyProjects[idx];
+  const cum = p.prev + val;
+  const rate = p.supply > 0 ? ((cum / p.supply)*100).toFixed(1) : '0.0';
+  document.getElementById(`total-${idx}`).textContent = cum.toLocaleString();
+  document.getElementById(`rate-${idx}`).textContent = rate + '%';
+
+  updateSummary();
+  if (document.getElementById('previewBox').classList.contains('show')) {
+    document.getElementById('previewBox').textContent = generateJSON();
+  }
+}
+
+function updateSummary() {
+  const cats = {집중관리:0, 일반:0, 공사비확보:0, 신규:0};
+  let todayTotal = 0, cumTotal = 0;
+
+  DATA.dailyProjects.forEach(p => {
+    todayTotal += p.today;
+    cumTotal += p.prev + p.today;
+    cats[p.cat] = (cats[p.cat]||0) + p.today;
+  });
+
+  document.getElementById('sumToday').textContent = todayTotal.toLocaleString();
+  document.getElementById('sumTotal').textContent = cumTotal.toLocaleString();
+  document.getElementById('sumCj').textContent = cats['집중관리'];
+  document.getElementById('sumCi').textContent = cats['일반'];
+  document.getElementById('sumCg').textContent = cats['공사비확보'];
+  document.getElementById('sumCs').textContent = cats['신규'];
+}
+
+// ── JSON 생성 ───────────────────────────────────────────
+function generateJSON() {
+  if (!DATA || !currentDate) return '';
+
+  const isSameDay = (currentDate === DATA.dailyDate);
+
+  // 딥카피
+  const d = JSON.parse(JSON.stringify(DATA));
+  d.dailyDate = currentDate;
+
+  // 1. dailyProjects: 날짜가 바뀌면 prev = 기존누계(prev+today), today = 새 입력값
+  d.dailyProjects = DATA.dailyProjects.map(p => ({
+    cat: p.cat,
+    name: p.name,
+    supply: p.supply,
+    prev: isSameDay ? p.prev : p.prev + p.today,
+    today: p.today   // 현재 입력된 today 그대로
+  }));
+
+  // 2. dailyLog: 금일 계약이 있으면 추가/갱신
+  const cats = {집중관리:0, 일반:0, 공사비확보:0, 신규:0};
+  let todayTotal = 0;
+  DATA.dailyProjects.forEach(p => {
+    todayTotal += p.today;
+    cats[p.cat] = (cats[p.cat]||0) + p.today;
+  });
+  if (todayTotal > 0) {
+    const newLog = {date: currentDate, total: todayTotal, bycat: {...cats}};
+    const existIdx = d.dailyLog.findIndex(l => l.date === currentDate);
+    if (existIdx >= 0) d.dailyLog[existIdx] = newLog;
+    else d.dailyLog.push(newLog);
+  }
+
+  // 3. 주간 슬라이딩: 월요일 & 해당 주가 weeks에 없을 때
+  if (isMonday(currentDate)) {
+    const mon = getMonday(currentDate);
+    const monTime = mon.getTime();
+    const exists = d.weeks.some(w => {
+      const ws = parseWeekStart(w); return ws && ws.getTime() === monTime;
+    });
+    if (!exists) {
+      d.weeks.shift();
+      d.weeks.push(`${d.weeks.length+1}주(${formatWeek(mon)})`);
+      d.weeklyProjects = d.weeklyProjects.map(p => ({
+        ...p, values: [...p.values.slice(1), null]
+      }));
+    }
+  }
+
+  // 4. 현재 주차 values 누적
+  const mon = getMonday(currentDate);
+  const monTime = mon.getTime();
+  const weekIdx = d.weeks.findIndex(w => {
+    const ws = parseWeekStart(w); return ws && ws.getTime() === monTime;
+  });
+  if (weekIdx >= 0) {
+    DATA.dailyProjects.forEach(p => {
+      if (!p.today) return;
+      const wp = d.weeklyProjects.find(wp => wp.name === p.name);
+      if (!wp) return;
+      const baseVal = DATA.weeklyProjects.find(wp2 => wp2.name === p.name)?.values[weekIdx] ?? null;
+      wp.values[weekIdx] = (baseVal || 0) + p.today;
+    });
+  }
+
+  return JSON.stringify(d, null, 2);
+}
+
+// ── 다운로드 ────────────────────────────────────────────
+function downloadJSON() {
+  if (!currentDate) { alert('날짜를 먼저 입력해주세요.'); return; }
+
+  const json = generateJSON();
+  const blob = new Blob([json], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function resetToday() {
+  DATA.dailyProjects.forEach(p => p.today = 0);
+  renderTable();
+}
+
+function togglePreview() {
+  const box = document.getElementById('previewBox');
+  const toggle = document.querySelector('.preview-toggle');
+  if (box.classList.contains('show')) {
+    box.classList.remove('show');
+    toggle.textContent = '▶ JSON 미리보기';
+  } else {
+    box.textContent = generateJSON();
+    box.classList.add('show');
+    toggle.textContent = '▼ JSON 미리보기 닫기';
+  }
+}
+
+// ── 이벤트 바인딩 ───────────────────────────────────────
+document.getElementById('dateInput').addEventListener('change', onDateChange);
+
+// ── 시작 ────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
