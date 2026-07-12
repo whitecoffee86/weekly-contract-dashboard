@@ -442,6 +442,7 @@ async function loadData(){
     DEFAULT_WEEKS=d.weeks;
     DEFAULT_PROJECTS=d.weeklyProjects;
     DEFAULT_DAILY_LOG=d.dailyLog;
+    projLog = d.projLog || {};
     dailyDate=d.dailyDate;
     dailyProjects=d.dailyProjects;
     // localStorage 우선 (사용자가 수동으로 편집한 주간 데이터 유지)
@@ -1020,26 +1021,13 @@ function renderAll(){renderWeekly();renderDaily();}
 
 /* ── 단지 상세 팝업 ── */
 let _modalDailyCI=null, _modalCumCI=null;
+let projLog={};  // data.json에서 로드
 
 function openProjModal(projName, cat){
   const m = CM[cat]||CM['일반'];
-
-  // dailyLog에서 해당 단지의 일별 계약 데이터 추출
-  // dailyProjects에서 해당 단지 정보 찾기
   const proj = dailyProjects.find(p=>p.name===projName);
   if(!proj) return;
 
-  // 날짜별 계약 수를 dailyLog + dailyProjects.today 로 재구성
-  // dailyLog는 카테고리별 합계만 있으므로, 단지별 일별 데이터는 별도 보관 필요
-  // → data.json에 단지별 일별 로그가 없으므로, 가능한 데이터로 구성:
-  //   · 현재 dailyDate의 today는 dailyProjects에서 직접 사용
-  //   · 나머지는 dailyLog 전체 기간에서 비율로 추정하는 대신,
-  //     dailyProjects_history(각 날짜의 스냅샷)가 없으면 제공 불가
-  // → 현실적으로 가능한 방법: data.json에 projLog(단지별 일별) 필드 추가
-  // → 우선 현재 데이터로 가능한 정보(총 누계, 금일, 잔여, 계약율)를 요약하고
-  //   주간 트렌드(weeklyProjects)의 주차별 데이터를 차트로 표현
-
-  const wp = projects.find(p=>p.name===projName);
   const supply = proj.supply;
   const cum = proj.prev + proj.today;
   const remain = supply - cum;
@@ -1058,46 +1046,71 @@ function openProjModal(projName, cat){
     <div class="modal-stat"><div class="modal-stat-label">공급</div><div class="modal-stat-val">${supply.toLocaleString()}</div></div>
   `;
 
-  // 주간 데이터 (weeklyProjects)
-  const weekLabels = weeks.map(w=>{ const r=w.match(/\(([^)]+)\)/); return r?r[1]:w; });
-  const weekVals = wp ? wp.values.map(v=>v||0) : weeks.map(()=>0);
+  // projLog에서 해당 단지 일별 데이터 추출
+  const logs = projLog[projName] || [];
 
-  // 누적 계산: 현재 누계(cum) - 현재주 이후 합산을 역산
-  // weeklyProjects의 values는 주차별 계약수
-  // 누적 라인: 각 주차까지의 합산을 현재 누계 기준으로 역산
-  const totalWeekSum = weekVals.reduce((a,b)=>a+b,0);
-  const baseBeforeWeeks = cum - totalWeekSum; // 주간 데이터 이전 누적
-  let cumVals=[], running=baseBeforeWeeks;
-  weekVals.forEach(v=>{ running+=v; cumVals.push(running); });
+  // 최근 60일 필터 or 전체
+  const allDates = logs.map(l=>l.date).sort();
+  const recentLogs = logs.slice(-60); // 최근 60개 데이터
 
-  // 차트 공통 옵션
+  // 일별 계약 데이터
+  const dailyLabels = recentLogs.map(l=>{
+    const [y,m,dd] = l.date.split('/');
+    return `${parseInt(m)}/${parseInt(dd)}`;
+  });
+  const dailyVals = recentLogs.map(l=>l.v);
+
+  // 누적 계약 데이터 (현재 누계 - 이후 합산을 역산)
+  // 전체 projLog 합산
+  const totalLogged = logs.reduce((s,l)=>s+l.v, 0);
+  // 현재 누계(cum) 기준, projLog 이전 기초값
+  const base = cum - totalLogged;
+  let running = base;
+  // 전체 구간 누적 (최근 60개만 표시)
+  const allCums = [];
+  const allLogs = [...logs].sort((a,b)=>a.date.localeCompare(b.date));
+  allLogs.forEach(l=>{ running+=l.v; allCums.push(running); });
+  const cumVals = allCums.slice(-60);
+
+  // 차트 없을 때 메시지
+  if(!logs.length){
+    document.getElementById('modalDailyChart').parentElement.innerHTML =
+      '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:.82rem">일별 데이터 없음</div>';
+    document.getElementById('modalCumChart').parentElement.innerHTML = '';
+    document.getElementById('projModal').classList.add('open');
+    document.body.style.overflow='hidden';
+    return;
+  }
+
   const chartFont = {family:"'Pretendard'",size:11};
   const gridColor = 'rgba(0,0,0,0.05)';
+  const TT2 = {...TT};
 
-  // 기존 차트 제거
   if(_modalDailyCI){_modalDailyCI.destroy();_modalDailyCI=null;}
   if(_modalCumCI){_modalCumCI.destroy();_modalCumCI=null;}
 
-  // 1. 일별(주간) 꺾은선 차트
+  // 1. 일별 꺾은선 차트
+  const maxDaily = Math.max(...dailyVals, 1);
   _modalDailyCI = new Chart(document.getElementById('modalDailyChart'),{
     type:'line',
     data:{
-      labels: weekLabels,
+      labels: dailyLabels,
       datasets:[{
-        label:'주간 계약',
-        data: weekVals,
+        label:'일별 계약',
+        data: dailyVals,
         borderColor: m.color,
-        backgroundColor: m.bg+'55',
-        pointBackgroundColor: m.color,
-        pointBorderColor:'#fff',
-        pointBorderWidth:2,
-        pointRadius: weekVals.map(v=>v>0?5:3),
-        tension:.3, fill:true, borderWidth:2.5,
+        backgroundColor: m.bg+'44',
+        pointBackgroundColor: dailyVals.map(v=>v>0?m.color:'transparent'),
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: dailyVals.map(v=>v>0?4:2),
+        tension:.3, fill:true, borderWidth:2,
         datalabels:{
-          display: ctx=>ctx.dataset.data[ctx.dataIndex]>0,
+          display: ctx=>ctx.dataset.data[ctx.dataIndex]>0 && dailyVals.length<=30,
           anchor:'top', align:'top',
-          formatter:v=>v+'세대',
-          color:m.color, font:{size:10,weight:'700',family:"'Pretendard'"}
+          formatter:v=>v,
+          color: m.color,
+          font:{size:9,weight:'700',family:"'Pretendard'"}
         }
       }]
     },
@@ -1106,14 +1119,28 @@ function openProjModal(projName, cat){
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{display:false},
-        tooltip:{...TT, callbacks:{label:ctx=>` 계약: ${ctx.raw}세대`}},
+        tooltip:{...TT2, callbacks:{
+          title: items => dailyLabels[items[0].dataIndex],
+          label: ctx => ` 계약: ${ctx.raw}세대`
+        }},
         datalabels:{display:true}
       },
       scales:{
-        x:{grid:{color:gridColor}, ticks:{color:'#7a8294',font:chartFont}},
-        y:{grid:{color:gridColor}, ticks:{color:'#7a8294',font:chartFont,precision:0,stepSize:1},
-           beginAtZero:true,
-           title:{display:true,text:'계약 (세대)',color:'#9aa0b0',font:{size:10}}}
+        x:{
+          grid:{color:gridColor},
+          ticks:{
+            color:'#7a8294', font:chartFont,
+            maxTicksLimit: 12,
+            maxRotation: 45
+          }
+        },
+        y:{
+          grid:{color:gridColor},
+          ticks:{color:'#7a8294', font:chartFont, precision:0, stepSize:1},
+          beginAtZero:true,
+          max: Math.ceil(maxDaily*1.3),
+          title:{display:true, text:'계약 (세대)', color:'#9aa0b0', font:{size:10}}
+        }
       }
     }
   });
@@ -1122,31 +1149,37 @@ function openProjModal(projName, cat){
   _modalCumCI = new Chart(document.getElementById('modalCumChart'),{
     type:'line',
     data:{
-      labels: weekLabels,
+      labels: dailyLabels,
       datasets:[
         {
           label:'누적 계약',
           data: cumVals,
           borderColor: m.color,
-          backgroundColor:'transparent',
+          backgroundColor: 'transparent',
           pointBackgroundColor: m.color,
           pointBorderColor:'#fff',
           pointBorderWidth:2,
-          pointRadius:4, tension:.3, fill:false, borderWidth:2.5,
+          pointRadius:3, tension:.3, fill:false, borderWidth:2.5,
           datalabels:{
             display: ctx=>ctx.dataIndex===cumVals.length-1,
-            anchor:'right', align:'right',
+            anchor:'left', align:'left',
             formatter:v=>v.toLocaleString()+'세대',
-            color:m.color, font:{size:10,weight:'700',family:"'Pretendard'"}
+            color: m.color,
+            font:{size:10,weight:'700',family:"'Pretendard'"}
           }
         },
         {
           label:'공급',
-          data: weeks.map(()=>supply),
+          data: dailyLabels.map(()=>supply),
           borderColor:'rgba(0,0,0,0.15)',
           backgroundColor:'transparent',
           borderDash:[4,4], pointRadius:0, borderWidth:1.5, tension:0,
-          datalabels:{display:false}
+          datalabels:{
+            display: ctx=>ctx.dataIndex===dailyLabels.length-1,
+            anchor:'right', align:'right',
+            formatter: ()=>supply.toLocaleString()+'세대',
+            color:'#9aa0b0', font:{size:9,family:"'Pretendard'"}
+          }
         }
       ]
     },
@@ -1155,19 +1188,25 @@ function openProjModal(projName, cat){
       interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{position:'top', labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:10,boxWidth:10,usePointStyle:true,pointStyle:'circle'}},
-        tooltip:{...TT, callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}},
+        tooltip:{...TT2, callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}},
         datalabels:{display:true}
       },
       scales:{
-        x:{grid:{color:gridColor}, ticks:{color:'#7a8294',font:chartFont}},
-        y:{grid:{color:gridColor}, ticks:{color:'#7a8294',font:chartFont,precision:0},
-           beginAtZero:false, max: Math.ceil(supply*1.05),
-           title:{display:true,text:'누계 (세대)',color:'#9aa0b0',font:{size:10}}}
+        x:{
+          grid:{color:gridColor},
+          ticks:{color:'#7a8294', font:chartFont, maxTicksLimit:12, maxRotation:45}
+        },
+        y:{
+          grid:{color:gridColor},
+          ticks:{color:'#7a8294', font:chartFont, precision:0},
+          min: Math.max(0, Math.floor((base||0)*0.95)),
+          max: Math.ceil(supply*1.02),
+          title:{display:true, text:'누계 (세대)', color:'#9aa0b0', font:{size:10}}
+        }
       }
     }
   });
 
-  // 모달 열기
   document.getElementById('projModal').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1179,7 +1218,6 @@ function closeProjModal(){
   if(_modalCumCI){_modalCumCI.destroy();_modalCumCI=null;}
 }
 
-// ESC 키로 닫기
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProjModal();});
 
 loadData();
