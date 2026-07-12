@@ -19,7 +19,7 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 .wrapper{padding:1.25rem 1.5rem;max-width:100%;margin:0 auto}
- 
+
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:2px solid var(--border)}
 .header-left h1{font-size:1.4rem;font-weight:700;letter-spacing:-.02em;color:var(--text);margin-bottom:.1rem}
 .header-left p{font-size:.7rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
@@ -28,20 +28,39 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 .btn-primary{background:var(--accent);color:#fff;border:1px solid var(--accent)}.btn-primary:hover{background:#1e4480}
 .btn-ghost{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}.btn-ghost:hover{background:var(--surface2)}
 .btn-warn{background:#fff;color:#8b1a1a;border:1px solid #d9b0b0}.btn-warn:hover{background:#fdf0f0}
- 
+
+/* ── 단지 상세 팝업 모달 ── */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;padding:1rem}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;width:100%;max-width:780px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-header{padding:1.1rem 1.4rem .9rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:1rem;font-weight:700;color:var(--text)}
+.modal-meta{font-size:.72rem;color:var(--muted);margin-top:2px}
+.modal-close{width:28px;height:28px;border-radius:50%;border:none;background:var(--surface2);cursor:pointer;font-size:1rem;color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-close:hover{background:var(--surface3);color:var(--text)}
+.modal-body{padding:1.1rem 1.4rem;overflow-y:auto;display:flex;flex-direction:column;gap:1.2rem}
+.modal-section-title{font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.6rem}
+.modal-chart-wrap{position:relative;height:200px}
+.modal-stats{display:flex;gap:1rem;flex-wrap:wrap;padding:.75rem 1rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)}
+.modal-stat{display:flex;flex-direction:column;gap:2px}
+.modal-stat-label{font-size:.65rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.modal-stat-val{font-size:1rem;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.proj-link{cursor:pointer;text-decoration:none;color:inherit;border-bottom:1px dashed var(--border2);transition:color .12s}
+.proj-link:hover{color:var(--accent);border-bottom-color:var(--accent)}
+
 /* 탭 — 일간/주간만 */
 .tab-bar{display:flex;gap:0;margin-bottom:1.25rem;border-bottom:2px solid var(--border)}
 .tab{padding:.5rem 1rem;font-size:.8rem;font-weight:600;cursor:pointer;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;color:var(--muted);background:transparent}
 .tab:hover{color:var(--text2)}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
 .tab-content{display:none}.tab-content.active{display:block}
- 
+
 .cb{display:inline-flex;align-items:center;gap:3px;font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:3px;font-family:'Pretendard',sans-serif}
 .cj{background:var(--cj-bg);color:var(--cj);border:1px solid #e8c0c0}
 .ci{background:var(--ci-bg);color:var(--ci);border:1px solid #bdd0ee}
 .cg{background:var(--cg-bg);color:var(--cg);border:1px solid #b0d8c0}
 .cs{background:var(--cs-bg);color:var(--cs);border:1px solid #ddd0a8}
- 
+
 .main-grid{display:grid;grid-template-columns:1fr 1fr;gap:.875rem;margin-bottom:.875rem}
 .full-width{grid-column:1/-1}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;min-width:0}
@@ -50,13 +69,13 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 .card-subtitle{font-size:.67rem;color:var(--muted2);margin-top:2px}
 .chart-wrap{position:relative}
 @media(max-width:800px){.main-grid{grid-template-columns:1fr}.full-width{grid-column:1}}
- 
+
 .filter-bar{display:flex;gap:.3rem;flex-wrap:wrap}
 .fb{padding:.22rem .6rem;border-radius:4px;font-size:.69rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Pretendard',sans-serif;transition:all .15s}
 .fb:hover{border-color:var(--border2);color:var(--text2)}
 .fb.active{color:#fff;border-color:transparent}
 .fa.active{background:var(--accent)}.fj.active{background:var(--cj)}.fi.active{background:var(--ci)}.fg.active{background:var(--cg)}.fs.active{background:var(--cs)}
- 
+
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.79rem}
 thead th{text-align:left;padding:.5rem .7rem;font-size:.64rem;font-weight:700;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);font-family:'Pretendard',sans-serif}
@@ -75,7 +94,7 @@ tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accen
 .sec-row td .meta-nums{font-size:.71rem;color:var(--text2);font-weight:500;margin-left:8px}
 .sec-row td .meta-nums strong{color:var(--text);font-weight:700}
 .today-col{color:var(--accent);font-weight:700}
- 
+
 /* 일간 상단 */
 .daily-top{display:grid;grid-template-columns:1fr 1fr;gap:.875rem;margin-bottom:.875rem}
 .today-big-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;position:relative;overflow:hidden}
@@ -92,7 +111,7 @@ tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accen
 .trm-label{font-size:.64rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .trm-val{font-size:1.3rem;font-weight:700;color:var(--text);letter-spacing:-.02em}
 .trm-unit{font-size:.72rem;color:var(--muted);margin-left:2px}
- 
+
 /* 금일 계약 단지 */
 .today-list{display:flex;flex-direction:column;gap:.4rem}
 .today-item{display:flex;align-items:center;justify-content:space-between;padding:.52rem .8rem;background:var(--surface2);border-radius:6px;border-left:3px solid var(--item-c)}
@@ -105,7 +124,7 @@ tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accen
 .today-total-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;border-top:1px solid var(--border);margin-top:.4rem}
 .today-total-label{font-size:.7rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
 .today-total-val{font-size:1rem;font-weight:800;color:var(--text)}
- 
+
 /* 미분양 숫자 카드 */
 .remain-big-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;position:relative;overflow:hidden}
 .remain-big-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ci)}
@@ -115,12 +134,12 @@ tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accen
 .remain-cat-val{font-size:1.3rem;font-weight:800;letter-spacing:-.03em;color:var(--rc);line-height:1}
 .remain-cat-unit{font-size:.7rem;font-weight:500;color:var(--muted);margin-left:2px}
 .remain-cat-rate{font-size:.64rem;color:var(--muted2);margin-top:.2rem}
- 
+
 /* 상세 테이블 미분양 컬럼 */
 .remain-hi{font-weight:700;color:var(--text) !important}
 .remain-mid{font-weight:600;color:var(--cs) !important}
 .remain-low{font-weight:700;color:var(--cj) !important}
- 
+
 /* 주간 요약 카드 */
 .week-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}
 .week-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem;position:relative;overflow:hidden}
@@ -133,7 +152,7 @@ tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accen
 .week-card-unit{font-size:.76rem;font-weight:500;color:var(--muted);margin-left:2px}
 .week-card-cats{display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.35rem}
 .week-cat-pill{font-size:.62rem;padding:1px 6px;border-radius:3px;font-weight:600}
- 
+
 /* Top3 */
 .top3-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.875rem}
 .top3-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem .95rem;display:flex;align-items:center;gap:.7rem}
@@ -144,7 +163,7 @@ tfoot td:not(:first-child):not(:nth-child(2)){text-align:right;color:var(--accen
 .top3-val{font-size:1.25rem;font-weight:800;color:var(--text);letter-spacing:-.03em}
 .top3-unit{font-size:.7rem;color:var(--muted);margin-left:2px}
 .top3-sub{font-size:.65rem;color:var(--muted2);margin-top:2px}
- 
+
 /* 입력 */
 .input-panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .panel-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.25rem;border-bottom:1px solid var(--border);background:var(--surface2)}
@@ -178,7 +197,7 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
 <body>
 <div class="toast" id="toast"></div>
 <div class="wrapper">
- 
+
 <div class="header">
   <div class="header-left">
     <h1>계약 트랜드 대시보드</h1>
@@ -186,22 +205,22 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
   </div>
   <div class="header-right"></div>
 </div>
- 
+
 <!-- 탭: 일간만 -->
 <div class="tab-bar">
   <div class="tab active" onclick="showTab('daily')" id="tab-daily">📆 일간 현황</div>
   <div class="tab" onclick="showTab('weekly')" id="tab-weekly">📅 주간 트랜드</div>
 </div>
- 
+
 <!-- ══ 일간 탭 ══ -->
 <div class="tab-content active" id="content-daily">
- 
+
   <!-- 상단 1행: 금일계약(좌) + 총미분양(우) -->
   <div class="daily-top">
     <div class="today-big-card" id="todayBigCard"></div>
     <div class="remain-big-card" id="remainBigCard"></div>
   </div>
- 
+
   <div class="main-grid">
     <!-- 2행 좌: 금일 계약 단지 -->
     <div class="card" id="todayCard">
@@ -213,7 +232,7 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
       <div class="card-header"><div><div class="card-title">카테고리별 미분양 세대</div><div class="card-subtitle">잔여(미분양) 세대수</div></div></div>
       <div class="chart-wrap" style="height:190px"><canvas id="dRemainCatChart"></canvas></div>
     </div>
- 
+
     <!-- 일별 트랜드 -->
     <div class="card full-width">
       <div class="card-header">
@@ -236,7 +255,7 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
       </div>
       <div class="chart-wrap" style="height:250px"><canvas id="dTrendChart"></canvas></div>
     </div>
- 
+
     <!-- 잔여세대 현황 -->
     <div class="card full-width">
       <div class="card-header">
@@ -251,7 +270,7 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
       </div>
       <div id="dRemainWrap" style="position:relative"><canvas id="dRemainChart"></canvas></div>
     </div>
- 
+
     <!-- 상세 테이블 -->
     <div class="card full-width">
       <div class="card-header">
@@ -270,7 +289,7 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
     </div>
   </div>
 </div>
- 
+
 <!-- ══ 주간 탭 ══ -->
 <div class="tab-content" id="content-weekly">
   <div class="week-summary" id="weekSummary"></div>
@@ -321,7 +340,7 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
     </div>
   </div>
 </div>
- 
+
 <!-- ══ 데이터 입력 (탭이 아닌 오버레이 방식) ══ -->
 <div class="tab-content" id="content-data">
   <div class="input-panel">
@@ -354,7 +373,34 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
   </div>
 </div>
 </div>
- 
+
+<!-- 단지 상세 팝업 모달 -->
+<div class="modal-backdrop" id="projModal" onclick="if(event.target===this)closeProjModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">단지명</div>
+        <div class="modal-meta" id="modalMeta"></div>
+      </div>
+      <button class="modal-close" onclick="closeProjModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- 요약 통계 -->
+      <div class="modal-stats" id="modalStats"></div>
+      <!-- 일별 계약 꺾은선 -->
+      <div>
+        <div class="modal-section-title">📈 일별 계약 추이</div>
+        <div class="modal-chart-wrap"><canvas id="modalDailyChart"></canvas></div>
+      </div>
+      <!-- 누적 계약 라인 -->
+      <div>
+        <div class="modal-section-title">📊 누적 계약 추이</div>
+        <div class="modal-chart-wrap"><canvas id="modalCumChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const CATS=['집중관리','일반','공사비확보','신규'];
 const CM={
@@ -368,14 +414,14 @@ const DOW=['일','월','화','수','목','금','토'];
 const TT={backgroundColor:'#fff',borderColor:'#e2e5ea',borderWidth:1,titleColor:'#1a1e2a',bodyColor:'#3a4050',padding:10};
 const SC={x:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}}},
           y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"},precision:0},beginAtZero:true}};
- 
+
 Chart.register(ChartDataLabels);
- 
+
 /* ═══ 데이터: data.json에서 로드 ═══ */
 let DEFAULT_WEEKS=[];
 let DEFAULT_PROJECTS=[];
 let DEFAULT_DAILY_LOG=[];
- 
+
 function loadSaved(){try{const s=localStorage.getItem('ctr_v14');if(s)return JSON.parse(s);}catch(e){}return null;}
 function saveSt(){try{localStorage.setItem('ctr_v14',JSON.stringify({weeks,projects,history,dailyLog}));}catch(e){}}
 let sv=loadSaved();
@@ -383,11 +429,11 @@ let weeks   =sv?sv.weeks   :[];
 let projects=sv?sv.projects:[];
 let history =sv?sv.history :[];
 let dailyLog=sv&&sv.dailyLog&&sv.dailyLog.length?sv.dailyLog:[];
- 
+
 /* 일간 데이터 (data.json 로드 전 기본값) */
 let dailyDate="";
 let dailyProjects=[];
- 
+
 async function loadData(){
   try{
     const res=await fetch('data.json?v='+Date.now());
@@ -415,7 +461,7 @@ async function loadData(){
   }
   renderAll();
 }
- 
+
 /* 유틸 */
 const vv=x=>x||0;
 const fmt=n=>n===0?'-':n.toLocaleString();
@@ -428,7 +474,7 @@ const awi=()=>{const wt=wtots();return weeks.map((_,i)=>i).filter(i=>wt[i]>0)};
 const dcum=p=>p.prev+p.today;
 const drate=p=>p.supply>0?((dcum(p)/p.supply)*100).toFixed(1):0;
 const dremain=p=>Math.max(0,p.supply-dcum(p));
- 
+
 function parseDateStr(s){const c=s.replace(/[^0-9\/]/g,''),pts=c.split('/');if(pts.length!==3)return null;return new Date(2000+parseInt(pts[0]),parseInt(pts[1])-1,parseInt(pts[2]));}
 function getMonday(d){const day=d.getDay(),diff=day===0?-6:1-day,m=new Date(d);m.setDate(d.getDate()+diff);m.setHours(0,0,0,0);return m;}
 function formatWeekLabel(mon){const sun=new Date(mon);sun.setDate(mon.getDate()+6);return`${mon.getMonth()+1}/${mon.getDate()}~${sun.getMonth()+1}/${sun.getDate()}`;}
@@ -440,7 +486,7 @@ function getWeekIndex(dateStr){
   return{idx:-1,mon,isNew:true};
 }
 function dateLabel(dateStr){const d=parseDateStr(dateStr);if(!d)return dateStr;return`${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`;}
- 
+
 /* 표시 주차 결정: 완결된 주(일요일까지 끝난 주)만 표시
    - 오늘 날짜 기준으로 현재 진행 중인 주차는 제외
    - 완결된 주 중 가장 최근 주차를 반환
@@ -463,7 +509,7 @@ function lastWeekIdx(){
   }
   return 3;
 }
- 
+
 /* 일간 → 주간 자동반영 */
 function applyDailyAndUpdateWeekly(){
   const dateStr=document.getElementById('dailyDateInput').value||dailyDate;
@@ -499,7 +545,7 @@ function applyDailyAndUpdateWeekly(){
   else showToast('금일 계약 없음');
   saveSt();renderHistory();renderAll();showTab('daily');
 }
- 
+
 function resetWeekly(){
   if(!confirm('주간 데이터를 초기화할까요?'))return;
   weeks=JSON.parse(JSON.stringify(DEFAULT_WEEKS));
@@ -512,23 +558,23 @@ function renderHistory(){
   box.innerHTML=history.slice(0,20).map(h=>`<p><strong>${h.date}</strong> → ${h.week||''}${h.units&&h.units.length?' <span style="color:var(--muted2)">'+h.units.join(', ')+'</span>':' <span style="color:var(--muted)">'+h.action+'</span>'}</p>`).join('');
 }
 function showToast(msg){const t=document.getElementById('toast');t.innerHTML=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
- 
+
 /* 차트 인스턴스 */
 let dRemainCatCI,dTrendCI,dRemainBI,wTrendCI,wBI;
 let wFBar='all',wFTable='all',wFTrend='all',dFRemain='all',dFTable='all',dFTrend='all';
- 
+
 /* ─── 일간: 금일계약 큰 카드 ─── */
 function renderTodayBig(){
   const tt=dailyProjects.reduce((s,p)=>s+p.today,0);
   const activeUnits=dailyProjects.filter(p=>p.today>0).length;
- 
+
   const catData=CATS.map(cat=>({
     cat,
     val:dailyProjects.filter(p=>p.cat===cat).reduce((s,p)=>s+p.today,0),
     m:CM[cat]
   }));
   const maxVal=Math.max(...catData.map(c=>c.val),1);
- 
+
   const catBars=catData.map(c=>`
     <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem">
       <div style="width:4rem;font-size:.66rem;font-weight:600;color:var(--muted);text-align:right;flex-shrink:0">${c.cat.replace('공사비확보','공사비')}</div>
@@ -539,7 +585,7 @@ function renderTodayBig(){
         ${c.val>0?c.val+'세대':'–'}
       </div>
     </div>`).join('');
- 
+
   document.getElementById('todayBigCard').innerHTML=`
     <div class="today-big-label">금일 계약</div>
     <div class="today-big-date">${dailyDate} 기준</div>
@@ -551,7 +597,7 @@ function renderTodayBig(){
       ${catBars}
     </div>`;
 }
- 
+
 /* ─── 일간: 금일계약 단지 ─── */
 function renderTodayCard(){
   const contracted=dailyProjects.filter(p=>p.today>0).sort((a,b)=>{const ci=CATS.indexOf(a.cat)-CATS.indexOf(b.cat);return ci||b.today-a.today;});
@@ -574,7 +620,7 @@ function renderTodayCard(){
       <span class="today-total-val">${total.toLocaleString()} <span style="font-size:.76rem;font-weight:500;color:var(--muted)">세대</span></span>
     </div>`;
 }
- 
+
 /* ─── 일간: 미분양 숫자 카드 ─── */
 function renderRemainBig(){
   const totalRemain=dailyProjects.reduce((s,p)=>s+dremain(p),0);
@@ -595,7 +641,7 @@ function renderRemainBig(){
     <div style="font-size:2.5rem;font-weight:800;letter-spacing:-.04em;color:var(--ci);line-height:1;margin-bottom:.7rem">${fmtN(totalRemain)}<span style="font-size:.95rem;font-weight:500;color:var(--muted);margin-left:4px">세대</span></div>
     <div class="remain-cats">${catItems}</div>`;
 }
- 
+
 /* ─── 일간: 카테고리별 미분양 막대 (범례 회색) ─── */
 function renderRemainCatChart(){
   const data=CATS.map(cat=>dailyProjects.filter(p=>p.cat===cat).reduce((s,p)=>s+dremain(p),0));
@@ -613,7 +659,7 @@ function renderRemainCatChart(){
       },
       scales:{...SC,y:{...SC.y,max:Math.ceil(maxVal*1.25),ticks:{...SC.y.ticks,precision:0,stepSize:1}}}}});
 }
- 
+
 /* ─── 일간: 일별 트랜드 (y축 정수, 요일, 주말 배경) ─── */
 function renderDTrend(){
   if(!dailyLog.length){if(dTrendCI){dTrendCI.destroy();dTrendCI=null;}return;}
@@ -621,13 +667,13 @@ function renderDTrend(){
   const log=dailyLog.slice(-n);
   const allMax=Math.max(...dailyLog.map(r=>r.total),1);
   const labels=log.map(r=>dateLabel(r.date));
- 
+
   // 주말 인덱스 계산 (토=6, 일=0)
   const weekendIdx=log.map((r,i)=>{
     const d=parseDateStr(r.date);
     return d&&(d.getDay()===0||d.getDay()===6)?i:-1;
   }).filter(i=>i>=0);
- 
+
   // 주말 배경을 그려주는 커스텀 플러그인
   const weekendPlugin={
     id:'weekendBg',
@@ -644,7 +690,7 @@ function renderDTrend(){
       ctx.restore();
     }
   };
- 
+
   let datasets,yMax;
   if(dFTrend==='all'){
     yMax=Math.ceil(allMax*1.15);
@@ -687,7 +733,7 @@ function renderDTrend(){
     }
   });
 }
- 
+
 /* ─── 일간: 단지별 미분양 막대 ─── */
 function renderDRemain(){
   const filtered=dFRemain==='all'?dailyProjects:dailyProjects.filter(p=>p.cat===dFRemain);
@@ -703,7 +749,7 @@ function renderDRemain(){
       scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}}},y:{grid:{display:false},ticks:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},autoSkip:false}}}}
   });
 }
- 
+
 /* ─── 일간: 상세 테이블 (단지명|분류|미분양|공급|전일|금일|누계|계약율) ─── */
 function renderDTable(){
   const filtered=dFTable==='all'?dailyProjects:dailyProjects.filter(p=>p.cat===dFTable);
@@ -724,7 +770,7 @@ function renderDTable(){
       // 미분양: 완판은 muted, 그 외는 기본 텍스트 색 (강조는 bold만)
       const remStyle=rem===0?'color:var(--muted);font-weight:600':'font-weight:700;color:var(--text2)';
       rows+=`<tr>
-        <td>${p.name}</td>
+        <td><span class="proj-link" onclick="openProjModal('${p.name.replace(/'/g,"\\'")}','${cat}')">${p.name}</span></td>
         <td><span class="cb ${m.cls}">${cat}</span></td>
         <td style="text-align:right;font-family:'DM Mono',monospace;${remStyle}">${rem===0?'완판':fmtN(rem)}</td>
         <td>${fmtN(p.supply)}</td><td>${fmtN(p.prev)}</td>
@@ -738,9 +784,9 @@ function renderDTable(){
   document.getElementById('dTBody').innerHTML=rows;
   document.getElementById('dTFoot').innerHTML=`<td>합 계</td><td></td><td style="text-align:right;font-family:'DM Mono',monospace;font-weight:800;color:var(--ci)">${fmtN(tremain)}</td><td>${fmtN(ts)}</td><td>${fmtN(tprev)}</td><td class="today-col">${ttoday>0?'+'+ttoday:'-'}</td><td>${fmtN(tcum)}</td><td>${ts>0?(tcum/ts*100).toFixed(1):0}%</td>`;
 }
- 
+
 /* ═══ 주간 렌더 ═══ */
- 
+
 /* 주차 요약 카드
    - 완결된 주만 1~4주차로 표시 (가장 최근 완결 = 4주차)
    - 진행 중인 주는 별도로 "이번 주 (진행 중)" 카드로 표시
@@ -748,11 +794,11 @@ function renderDTable(){
 function renderWeekSummary(){
   const wt=wtots();
   const today=parseDateStr(dailyDate)||new Date();today.setHours(0,0,0,0);
- 
+
   // 각 주차의 완결 여부 분류
   const completedIdxs=[]; // 완결된 주 인덱스 목록 (오래된 순)
   let ongoingIdx=-1;       // 현재 진행 중인 주 인덱스
- 
+
   weeks.forEach((w,i)=>{
     const ws=parseWeekStart(w);
     if(!ws)return;
@@ -760,11 +806,11 @@ function renderWeekSummary(){
     if(sun<=today) completedIdxs.push(i);  // 일요일 당일도 완결로 처리
     else if(ws<=today) ongoingIdx=i;
   });
- 
+
   // 완결된 주를 최근 4개로 제한, 번호 역방향 부여 (마지막=4주차)
   const recent=completedIdxs.slice(-4);
   const cards=[];
- 
+
   recent.forEach((idx,rank)=>{
     const weekNum=rank+1; // 1,2,3,4주차
     const isLast=rank===recent.length-1; // 4주차 = 지난 주
@@ -778,7 +824,7 @@ function renderWeekSummary(){
       const m=CM[cat];
       return`<span class="week-cat-pill" style="background:${m.bg};color:${m.color};border:1px solid ${m.color}40">${cat.replace('공사비확보','공사비')} ${cv}</span>`;
     }).join('');
- 
+
     const label=isLast?`${weekNum}주차 <span style="font-size:.6rem;color:var(--accent);font-weight:700">지난 주</span>`:`${weekNum}주차`;
     cards.push(`<div class="week-card${isLast?' current':''}" style="--wc:${WCOL[rank]}">
       <div class="week-card-label">${label}</div>
@@ -787,7 +833,7 @@ function renderWeekSummary(){
       ${total>0&&catPills?`<div class="week-card-cats">${catPills}</div>`:`<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem">데이터 없음</div>`}
     </div>`);
   });
- 
+
   // 빈 슬롯 채우기 (완결 주가 4개 미만일 때)
   while(cards.length<4){
     cards.unshift(`<div class="week-card" style="--wc:#c8cdd5;opacity:.55">
@@ -796,7 +842,7 @@ function renderWeekSummary(){
       <div class="week-card-val" style="color:var(--muted2)">—</div>
     </div>`);
   }
- 
+
   // 진행 중인 주 카드 (있을 때만 추가)
   if(ongoingIdx>=0){
     const w=weeks[ongoingIdx];
@@ -816,13 +862,13 @@ function renderWeekSummary(){
       ${total>0&&catPills?`<div class="week-card-cats">${catPills}</div>`:`<div style="font-size:.65rem;color:var(--muted);margin-top:.3rem">집계 중</div>`}
     </div>`);
   }
- 
+
   // grid 컬럼 수 조정 (진행 중 카드 포함시 5열, 아니면 4열)
   const grid=document.getElementById('weekSummary');
   grid.style.gridTemplateColumns=ongoingIdx>=0?'repeat(5,1fr)':'repeat(4,1fr)';
   grid.innerHTML=cards.join('');
 }
- 
+
 /* Top3 */
 function renderTop3(){
   const wi=lastWeekIdx();
@@ -841,7 +887,7 @@ function renderTop3(){
     </div>`;
   }).join(''):'<div style="color:var(--muted);font-size:.8rem;padding:.5rem">데이터 없음</div>';
 }
- 
+
 /* 한 주간 트랜드 (월~일): dailyLog에서 해당 주 날짜 추출 */
 function renderWTrend(){
   const wi=lastWeekIdx();
@@ -880,7 +926,7 @@ function renderWTrend(){
         y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"},precision:0,stepSize:1},beginAtZero:true,max:Math.ceil(allMax*1.2),title:{display:true,text:'계약 (세대)',color:'#9aa0b0',font:{size:10}}}}}
   });
 }
- 
+
 /* 단지별 막대 (지난 주) */
 function renderWBar(){
   const wi=lastWeekIdx();
@@ -899,7 +945,7 @@ function renderWBar(){
       scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{color:'#7a8294',font:{size:11,family:"'Pretendard'"}}},y:{grid:{display:false},ticks:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},autoSkip:false}}}}
   });
 }
- 
+
 /* 주간 상세 테이블 */
 function renderWTable(){
   const wi=lastWeekIdx();
@@ -924,7 +970,7 @@ function renderWTable(){
   document.getElementById('wTBody').innerHTML=rows;
   document.getElementById('wTFoot').innerHTML=`<td>합 계</td><td></td><td>${wt[wi].toLocaleString()}</td>`;
 }
- 
+
 /* 필터 */
 function setWF(t,v,el){
   if(t==='bar')wFBar=v;else if(t==='table')wFTable=v;else wFTrend=v;
@@ -936,7 +982,7 @@ function setDF(t,v,el){
   el.closest('.filter-bar').querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));el.classList.add('active');
   if(t==='remain')renderDRemain();else if(t==='trend')renderDTrend();else renderDTable();
 }
- 
+
 /* 입력 폼 */
 function renderDInputForm(){
   document.getElementById('dailyDateInput').value=dailyDate;
@@ -954,7 +1000,7 @@ function renderDInputForm(){
 }
 function addDailyRow(){dailyProjects.push({cat:'일반',name:'',supply:0,prev:0,today:0});renderDInputForm();}
 function removeDRow(i){if(dailyProjects.length<=1)return;dailyProjects.splice(i,1);renderDInputForm();}
- 
+
 /* 탭 */
 function showTab(id){
   ['daily','weekly','data'].forEach(t=>{
@@ -967,12 +1013,177 @@ function showTab(id){
     setTimeout(()=>{renderWTrend();renderWBar();},50);
   }
 }
- 
+
 function renderWeekly(){renderWeekSummary();renderTop3();renderWTrend();renderWBar();renderWTable();}
 function renderDaily(){renderTodayBig();renderTodayCard();renderRemainBig();renderRemainCatChart();renderDTrend();renderDRemain();renderDTable();}
 function renderAll(){renderWeekly();renderDaily();}
+
+/* ── 단지 상세 팝업 ── */
+let _modalDailyCI=null, _modalCumCI=null;
+
+function openProjModal(projName, cat){
+  const m = CM[cat]||CM['일반'];
+
+  // dailyLog에서 해당 단지의 일별 계약 데이터 추출
+  // dailyProjects에서 해당 단지 정보 찾기
+  const proj = dailyProjects.find(p=>p.name===projName);
+  if(!proj) return;
+
+  // 날짜별 계약 수를 dailyLog + dailyProjects.today 로 재구성
+  // dailyLog는 카테고리별 합계만 있으므로, 단지별 일별 데이터는 별도 보관 필요
+  // → data.json에 단지별 일별 로그가 없으므로, 가능한 데이터로 구성:
+  //   · 현재 dailyDate의 today는 dailyProjects에서 직접 사용
+  //   · 나머지는 dailyLog 전체 기간에서 비율로 추정하는 대신,
+  //     dailyProjects_history(각 날짜의 스냅샷)가 없으면 제공 불가
+  // → 현실적으로 가능한 방법: data.json에 projLog(단지별 일별) 필드 추가
+  // → 우선 현재 데이터로 가능한 정보(총 누계, 금일, 잔여, 계약율)를 요약하고
+  //   주간 트렌드(weeklyProjects)의 주차별 데이터를 차트로 표현
+
+  const wp = projects.find(p=>p.name===projName);
+  const supply = proj.supply;
+  const cum = proj.prev + proj.today;
+  const remain = supply - cum;
+  const rate = supply>0?(cum/supply*100).toFixed(1):0;
+
+  // 모달 헤더
+  document.getElementById('modalTitle').textContent = projName;
+  document.getElementById('modalMeta').innerHTML = `<span class="cb ${m.cls}">${cat}</span>&nbsp; 공급 ${supply.toLocaleString()}세대`;
+
+  // 요약 통계
+  document.getElementById('modalStats').innerHTML = `
+    <div class="modal-stat"><div class="modal-stat-label">누계 계약</div><div class="modal-stat-val" style="color:${m.color}">${cum.toLocaleString()}</div></div>
+    <div class="modal-stat"><div class="modal-stat-label">금일</div><div class="modal-stat-val">${proj.today>0?'+'+proj.today:'-'}</div></div>
+    <div class="modal-stat"><div class="modal-stat-label">미분양</div><div class="modal-stat-val">${remain.toLocaleString()}</div></div>
+    <div class="modal-stat"><div class="modal-stat-label">계약율</div><div class="modal-stat-val">${rate}%</div></div>
+    <div class="modal-stat"><div class="modal-stat-label">공급</div><div class="modal-stat-val">${supply.toLocaleString()}</div></div>
+  `;
+
+  // 주간 데이터 (weeklyProjects)
+  const weekLabels = weeks.map(w=>{ const r=w.match(/\(([^)]+)\)/); return r?r[1]:w; });
+  const weekVals = wp ? wp.values.map(v=>v||0) : weeks.map(()=>0);
+
+  // 누적 계산: 현재 누계(cum) - 현재주 이후 합산을 역산
+  // weeklyProjects의 values는 주차별 계약수
+  // 누적 라인: 각 주차까지의 합산을 현재 누계 기준으로 역산
+  const totalWeekSum = weekVals.reduce((a,b)=>a+b,0);
+  const baseBeforeWeeks = cum - totalWeekSum; // 주간 데이터 이전 누적
+  let cumVals=[], running=baseBeforeWeeks;
+  weekVals.forEach(v=>{ running+=v; cumVals.push(running); });
+
+  // 차트 공통 옵션
+  const chartFont = {family:"'Pretendard'",size:11};
+  const gridColor = 'rgba(0,0,0,0.05)';
+
+  // 기존 차트 제거
+  if(_modalDailyCI){_modalDailyCI.destroy();_modalDailyCI=null;}
+  if(_modalCumCI){_modalCumCI.destroy();_modalCumCI=null;}
+
+  // 1. 일별(주간) 꺾은선 차트
+  _modalDailyCI = new Chart(document.getElementById('modalDailyChart'),{
+    type:'line',
+    data:{
+      labels: weekLabels,
+      datasets:[{
+        label:'주간 계약',
+        data: weekVals,
+        borderColor: m.color,
+        backgroundColor: m.bg+'55',
+        pointBackgroundColor: m.color,
+        pointBorderColor:'#fff',
+        pointBorderWidth:2,
+        pointRadius: weekVals.map(v=>v>0?5:3),
+        tension:.3, fill:true, borderWidth:2.5,
+        datalabels:{
+          display: ctx=>ctx.dataset.data[ctx.dataIndex]>0,
+          anchor:'top', align:'top',
+          formatter:v=>v+'세대',
+          color:m.color, font:{size:10,weight:'700',family:"'Pretendard'"}
+        }
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{...TT, callbacks:{label:ctx=>` 계약: ${ctx.raw}세대`}},
+        datalabels:{display:true}
+      },
+      scales:{
+        x:{grid:{color:gridColor}, ticks:{color:'#7a8294',font:chartFont}},
+        y:{grid:{color:gridColor}, ticks:{color:'#7a8294',font:chartFont,precision:0,stepSize:1},
+           beginAtZero:true,
+           title:{display:true,text:'계약 (세대)',color:'#9aa0b0',font:{size:10}}}
+      }
+    }
+  });
+
+  // 2. 누적 계약 라인 차트
+  _modalCumCI = new Chart(document.getElementById('modalCumChart'),{
+    type:'line',
+    data:{
+      labels: weekLabels,
+      datasets:[
+        {
+          label:'누적 계약',
+          data: cumVals,
+          borderColor: m.color,
+          backgroundColor:'transparent',
+          pointBackgroundColor: m.color,
+          pointBorderColor:'#fff',
+          pointBorderWidth:2,
+          pointRadius:4, tension:.3, fill:false, borderWidth:2.5,
+          datalabels:{
+            display: ctx=>ctx.dataIndex===cumVals.length-1,
+            anchor:'right', align:'right',
+            formatter:v=>v.toLocaleString()+'세대',
+            color:m.color, font:{size:10,weight:'700',family:"'Pretendard'"}
+          }
+        },
+        {
+          label:'공급',
+          data: weeks.map(()=>supply),
+          borderColor:'rgba(0,0,0,0.15)',
+          backgroundColor:'transparent',
+          borderDash:[4,4], pointRadius:0, borderWidth:1.5, tension:0,
+          datalabels:{display:false}
+        }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{position:'top', labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:10,boxWidth:10,usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{...TT, callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}},
+        datalabels:{display:true}
+      },
+      scales:{
+        x:{grid:{color:gridColor}, ticks:{color:'#7a8294',font:chartFont}},
+        y:{grid:{color:gridColor}, ticks:{color:'#7a8294',font:chartFont,precision:0},
+           beginAtZero:false, max: Math.ceil(supply*1.05),
+           title:{display:true,text:'누계 (세대)',color:'#9aa0b0',font:{size:10}}}
+      }
+    }
+  });
+
+  // 모달 열기
+  document.getElementById('projModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeProjModal(){
+  document.getElementById('projModal').classList.remove('open');
+  document.body.style.overflow='';
+  if(_modalDailyCI){_modalDailyCI.destroy();_modalDailyCI=null;}
+  if(_modalCumCI){_modalCumCI.destroy();_modalCumCI=null;}
+}
+
+// ESC 키로 닫기
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProjModal();});
+
 loadData();
- 
+
 </script>
 </body>
 </html>
