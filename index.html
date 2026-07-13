@@ -47,6 +47,10 @@ body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);
 .modal-stat-val{font-size:1rem;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
 .proj-link{cursor:pointer;text-decoration:none;color:inherit;border-bottom:1px dashed var(--border2);transition:color .12s}
 .proj-link:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.modal-tab-bar{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1rem;flex-shrink:0}
+.modal-tab{padding:.42rem 1rem;font-size:.78rem;font-weight:600;cursor:pointer;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);background:transparent;font-family:'Pretendard',sans-serif;transition:all .15s}
+.modal-tab:hover{color:var(--text2)}
+.modal-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700}
 
 /* 탭 — 일간/주간만 */
 .tab-bar{display:flex;gap:0;margin-bottom:1.25rem;border-bottom:2px solid var(--border)}
@@ -385,16 +389,18 @@ select.if_{font-family:'Pretendard',sans-serif;text-align:left;cursor:pointer;ba
       <button class="modal-close" onclick="closeProjModal()">✕</button>
     </div>
     <div class="modal-body">
-      <!-- 요약 통계 -->
       <div class="modal-stats" id="modalStats"></div>
-      <!-- 일별 계약 꺾은선 -->
+      <div class="modal-tab-bar">
+        <button class="modal-tab active" onclick="switchModalTab('daily',this)">일간</button>
+        <button class="modal-tab" onclick="switchModalTab('weekly',this)">주간</button>
+        <button class="modal-tab" onclick="switchModalTab('monthly',this)">월별</button>
+      </div>
       <div>
-        <div class="modal-section-title">📈 일별 계약 추이</div>
+        <div class="modal-section-title" id="modalChartLabel">📈 일별 계약 추이</div>
         <div class="modal-chart-wrap"><canvas id="modalDailyChart"></canvas></div>
       </div>
-      <!-- 누적 계약 라인 -->
       <div>
-        <div class="modal-section-title">📊 누적 계약 추이</div>
+        <div class="modal-section-title">📊 누적 계약율 추이</div>
         <div class="modal-chart-wrap"><canvas id="modalCumChart"></canvas></div>
       </div>
     </div>
@@ -1021,194 +1027,129 @@ function renderAll(){renderWeekly();renderDaily();}
 
 /* ── 단지 상세 팝업 ── */
 let _modalDailyCI=null, _modalCumCI=null;
-let projLog={};  // data.json에서 로드
+let projLog={};
+let _curModalProj=null;
 
 function openProjModal(projName, cat){
-  const m = CM[cat]||CM['일반'];
-  const proj = dailyProjects.find(p=>p.name===projName);
-  if(!proj) return;
+  _curModalProj={projName,cat};
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  _renderModal(projName,cat,'daily');
+  document.getElementById('projModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
 
-  const supply = proj.supply;
-  const cum = proj.prev + proj.today;
-  const remain = supply - cum;
-  const rate = supply>0?(cum/supply*100).toFixed(1):0;
+function switchModalTab(tab,el){
+  document.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(_curModalProj)_renderModal(_curModalProj.projName,_curModalProj.cat,tab);
+}
 
-  // 모달 헤더
-  document.getElementById('modalTitle').textContent = projName;
-  document.getElementById('modalMeta').innerHTML = `<span class="cb ${m.cls}">${cat}</span>&nbsp; 공급 ${supply.toLocaleString()}세대`;
+function _renderModal(projName,cat,tab){
+  const m=CM[cat]||CM['일반'];
+  const proj=dailyProjects.find(p=>p.name===projName);
+  if(!proj)return;
+  const supply=proj.supply,cum=proj.prev+proj.today,remain=supply-cum;
+  const rate=supply>0?(cum/supply*100).toFixed(1):0;
 
-  // 요약 통계
-  document.getElementById('modalStats').innerHTML = `
+  document.getElementById('modalTitle').textContent=projName;
+  document.getElementById('modalMeta').innerHTML=`<span class="cb ${m.cls}">${cat}</span>&nbsp; 공급 ${supply.toLocaleString()}세대`;
+  document.getElementById('modalStats').innerHTML=`
     <div class="modal-stat"><div class="modal-stat-label">누계 계약</div><div class="modal-stat-val" style="color:${m.color}">${cum.toLocaleString()}</div></div>
     <div class="modal-stat"><div class="modal-stat-label">금일</div><div class="modal-stat-val">${proj.today>0?'+'+proj.today:'-'}</div></div>
     <div class="modal-stat"><div class="modal-stat-label">미분양</div><div class="modal-stat-val">${remain.toLocaleString()}</div></div>
-    <div class="modal-stat"><div class="modal-stat-label">계약율</div><div class="modal-stat-val">${rate}%</div></div>
+    <div class="modal-stat"><div class="modal-stat-label">계약율</div><div class="modal-stat-val" style="color:${m.color}">${rate}%</div></div>
     <div class="modal-stat"><div class="modal-stat-label">공급</div><div class="modal-stat-val">${supply.toLocaleString()}</div></div>
   `;
 
-  // projLog에서 해당 단지 일별 데이터 추출
-  const logs = projLog[projName] || [];
+  const logs=(projLog[projName]||[]).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if(proj.today>0){const last=logs[logs.length-1];if(!last||last.date!==dailyDate)logs.push({date:dailyDate,v:proj.today});}
 
-  // 최근 60일 필터 or 전체
-  const allDates = logs.map(l=>l.date).sort();
-  const recentLogs = logs.slice(-60); // 최근 60개 데이터
+  const totalLogged=logs.reduce((s,l)=>s+l.v,0);
+  const base=cum-totalLogged;
 
-  // 일별 계약 데이터
-  const dailyLabels = recentLogs.map(l=>{
-    const [y,m,dd] = l.date.split('/');
-    return `${parseInt(m)}/${parseInt(dd)}`;
-  });
-  const dailyVals = recentLogs.map(l=>l.v);
+  let labels=[],vals=[],cumRates=[];
 
-  // 누적 계약 데이터 (현재 누계 - 이후 합산을 역산)
-  // 전체 projLog 합산
-  const totalLogged = logs.reduce((s,l)=>s+l.v, 0);
-  // 현재 누계(cum) 기준, projLog 이전 기초값
-  const base = cum - totalLogged;
-  let running = base;
-  // 전체 구간 누적 (최근 60개만 표시)
-  const allCums = [];
-  const allLogs = [...logs].sort((a,b)=>a.date.localeCompare(b.date));
-  allLogs.forEach(l=>{ running+=l.v; allCums.push(running); });
-  const cumVals = allCums.slice(-60);
-
-  // 차트 없을 때 메시지
-  if(!logs.length){
-    document.getElementById('modalDailyChart').parentElement.innerHTML =
-      '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:.82rem">일별 데이터 없음</div>';
-    document.getElementById('modalCumChart').parentElement.innerHTML = '';
-    document.getElementById('projModal').classList.add('open');
-    document.body.style.overflow='hidden';
-    return;
+  if(tab==='daily'){
+    document.getElementById('modalChartLabel').textContent='📈 일별 계약 추이';
+    const recent=logs.slice(-45);
+    labels=recent.map(l=>{const[,mo,d]=l.date.split('/');return`${parseInt(mo)}/${parseInt(d)}`;});
+    vals=recent.map(l=>l.v);
+    let run=base;
+    const allRates=logs.map(l=>{run+=l.v;return supply>0?parseFloat((run/supply*100).toFixed(1)):0;});
+    cumRates=allRates.slice(-45);
+  } else if(tab==='weekly'){
+    document.getElementById('modalChartLabel').textContent='📈 주간 계약 추이';
+    const wm={};
+    logs.forEach(l=>{
+      const[y,mo,d]=l.date.split('/');
+      const dt=new Date(2000+parseInt(y),parseInt(mo)-1,parseInt(d));
+      const day=dt.getDay(),diff=day===0?-6:1-day;
+      const mon=new Date(dt);mon.setDate(dt.getDate()+diff);
+      const key=`${mon.getMonth()+1}/${mon.getDate()}`;
+      wm[key]=(wm[key]||0)+l.v;
+    });
+    const wk=Object.keys(wm).sort((a,b)=>{const[am,ad]=a.split('/'),[bm,bd]=b.split('/');return(parseInt(am)*100+parseInt(ad))-(parseInt(bm)*100+parseInt(bd));});
+    labels=wk.map(k=>`${k}주`);vals=wk.map(k=>wm[k]);
+    let run=base;cumRates=vals.map(v=>{run+=v;return supply>0?parseFloat((run/supply*100).toFixed(1)):0;});
+  } else {
+    document.getElementById('modalChartLabel').textContent='📈 월별 계약 추이';
+    const mm={};
+    logs.forEach(l=>{const[y,mo]=l.date.split('/');const key=`${y}/${mo}`;mm[key]=(mm[key]||0)+l.v;});
+    const mk=Object.keys(mm).sort();
+    labels=mk.map(k=>{const[,mo]=k.split('/');return`${parseInt(mo)}월`;});
+    vals=mk.map(k=>mm[k]);
+    let run=base;cumRates=vals.map(v=>{run+=v;return supply>0?parseFloat((run/supply*100).toFixed(1)):0;});
   }
 
-  const chartFont = {family:"'Pretendard'",size:11};
-  const gridColor = 'rgba(0,0,0,0.05)';
-  const TT2 = {...TT};
-
+  const cf={family:"'Pretendard'",size:11},gc='rgba(0,0,0,0.05)';
   if(_modalDailyCI){_modalDailyCI.destroy();_modalDailyCI=null;}
   if(_modalCumCI){_modalCumCI.destroy();_modalCumCI=null;}
 
-  // 1. 일별 꺾은선 차트
-  const maxDaily = Math.max(...dailyVals, 1);
-  _modalDailyCI = new Chart(document.getElementById('modalDailyChart'),{
-    type:'line',
-    data:{
-      labels: dailyLabels,
-      datasets:[{
-        label:'일별 계약',
-        data: dailyVals,
-        borderColor: m.color,
-        backgroundColor: m.bg+'44',
-        pointBackgroundColor: dailyVals.map(v=>v>0?m.color:'transparent'),
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointRadius: dailyVals.map(v=>v>0?4:2),
-        tension:.3, fill:true, borderWidth:2,
-        datalabels:{
-          display: ctx=>ctx.dataset.data[ctx.dataIndex]>0 && dailyVals.length<=30,
-          anchor:'top', align:'top',
-          formatter:v=>v,
-          color: m.color,
-          font:{size:9,weight:'700',family:"'Pretendard'"}
-        }
-      }]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{display:false},
-        tooltip:{...TT2, callbacks:{
-          title: items => dailyLabels[items[0].dataIndex],
-          label: ctx => ` 계약: ${ctx.raw}세대`
-        }},
-        datalabels:{display:true}
-      },
-      scales:{
-        x:{
-          grid:{color:gridColor},
-          ticks:{
-            color:'#7a8294', font:chartFont,
-            maxTicksLimit: 12,
-            maxRotation: 45
-          }
-        },
-        y:{
-          grid:{color:gridColor},
-          ticks:{color:'#7a8294', font:chartFont, precision:0, stepSize:1},
-          beginAtZero:true,
-          max: Math.ceil(maxDaily*1.3),
-          title:{display:true, text:'계약 (세대)', color:'#9aa0b0', font:{size:10}}
-        }
-      }
-    }
+  if(!logs.length){
+    document.getElementById('modalDailyChart').parentElement.innerHTML='<div style="text-align:center;padding:2rem;color:var(--muted);font-size:.82rem">데이터 없음</div>';
+    return;
+  }
+
+  const maxVal=Math.max(...vals,1);
+  _modalDailyCI=new Chart(document.getElementById('modalDailyChart'),{type:'line',
+    data:{labels,datasets:[{label:'계약',data:vals,
+      borderColor:m.color,backgroundColor:m.bg+'44',
+      pointBackgroundColor:vals.map(v=>v>0?m.color:'transparent'),
+      pointBorderColor:'#fff',pointBorderWidth:2,
+      pointRadius:vals.map(v=>v>0?4:2),
+      tension:.3,fill:true,borderWidth:2,
+      datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0&&labels.length<=30,
+        anchor:'top',align:'top',formatter:v=>v,color:m.color,font:{size:9,weight:'700',family:"'Pretendard'"}}}]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},
+        tooltip:{...TT,callbacks:{title:i=>labels[i[0].dataIndex],label:c=>` 계약: ${c.raw}세대`}},
+        datalabels:{display:true}},
+      scales:{x:{grid:{color:gc},ticks:{color:'#7a8294',font:cf,maxTicksLimit:12,maxRotation:45}},
+        y:{grid:{color:gc},ticks:{color:'#7a8294',font:cf,precision:0,stepSize:1},
+          beginAtZero:true,max:Math.ceil(maxVal*1.3),
+          title:{display:true,text:'계약 (세대)',color:'#9aa0b0',font:{size:10}}}}}
   });
 
-  // 2. 누적 계약 라인 차트
-  _modalCumCI = new Chart(document.getElementById('modalCumChart'),{
-    type:'line',
-    data:{
-      labels: dailyLabels,
-      datasets:[
-        {
-          label:'누적 계약',
-          data: cumVals,
-          borderColor: m.color,
-          backgroundColor: 'transparent',
-          pointBackgroundColor: m.color,
-          pointBorderColor:'#fff',
-          pointBorderWidth:2,
-          pointRadius:3, tension:.3, fill:false, borderWidth:2.5,
-          datalabels:{
-            display: ctx=>ctx.dataIndex===cumVals.length-1,
-            anchor:'left', align:'left',
-            formatter:v=>v.toLocaleString()+'세대',
-            color: m.color,
-            font:{size:10,weight:'700',family:"'Pretendard'"}
-          }
-        },
-        {
-          label:'공급',
-          data: dailyLabels.map(()=>supply),
-          borderColor:'rgba(0,0,0,0.15)',
-          backgroundColor:'transparent',
-          borderDash:[4,4], pointRadius:0, borderWidth:1.5, tension:0,
-          datalabels:{
-            display: ctx=>ctx.dataIndex===dailyLabels.length-1,
-            anchor:'right', align:'right',
-            formatter: ()=>supply.toLocaleString()+'세대',
-            color:'#9aa0b0', font:{size:9,family:"'Pretendard'"}
-          }
-        }
-      ]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{position:'top', labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:10,boxWidth:10,usePointStyle:true,pointStyle:'circle'}},
-        tooltip:{...TT2, callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()}세대`}},
-        datalabels:{display:true}
-      },
-      scales:{
-        x:{
-          grid:{color:gridColor},
-          ticks:{color:'#7a8294', font:chartFont, maxTicksLimit:12, maxRotation:45}
-        },
-        y:{
-          grid:{color:gridColor},
-          ticks:{color:'#7a8294', font:chartFont, precision:0},
-          min: Math.max(0, Math.floor((base||0)*0.95)),
-          max: Math.ceil(supply*1.02),
-          title:{display:true, text:'누계 (세대)', color:'#9aa0b0', font:{size:10}}
-        }
-      }
-    }
+  const maxRate=Math.max(...cumRates,1);
+  _modalCumCI=new Chart(document.getElementById('modalCumChart'),{type:'line',
+    data:{labels,datasets:[
+      {label:'계약율',data:cumRates,borderColor:m.color,backgroundColor:'transparent',
+        pointBackgroundColor:m.color,pointBorderColor:'#fff',pointBorderWidth:2,
+        pointRadius:3,tension:.3,fill:false,borderWidth:2.5,
+        datalabels:{display:ctx=>ctx.dataIndex===cumRates.length-1,
+          anchor:'left',align:'left',formatter:v=>v+'%',color:m.color,font:{size:10,weight:'700',family:"'Pretendard'"}}},
+      {label:'완판(100%)',data:labels.map(()=>100),
+        borderColor:'rgba(0,0,0,0.15)',backgroundColor:'transparent',
+        borderDash:[4,4],pointRadius:0,borderWidth:1.5,tension:0,datalabels:{display:false}}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top',labels:{color:'#3a4050',font:{size:11,family:"'Pretendard'"},padding:10,boxWidth:10,usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{...TT,callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}%`}},datalabels:{display:true}},
+      scales:{x:{grid:{color:gc},ticks:{color:'#7a8294',font:cf,maxTicksLimit:12,maxRotation:45}},
+        y:{grid:{color:gc},ticks:{color:'#7a8294',font:cf,callback:v=>v+'%'},
+          min:Math.max(0,Math.floor((cumRates[0]||0)-5)),max:Math.min(105,Math.ceil(maxRate+5)),
+          title:{display:true,text:'계약율 (%)',color:'#9aa0b0',font:{size:10}}}}}
   });
-
-  document.getElementById('projModal').classList.add('open');
-  document.body.style.overflow='hidden';
 }
 
 function closeProjModal(){
@@ -1216,9 +1157,11 @@ function closeProjModal(){
   document.body.style.overflow='';
   if(_modalDailyCI){_modalDailyCI.destroy();_modalDailyCI=null;}
   if(_modalCumCI){_modalCumCI.destroy();_modalCumCI=null;}
+  _curModalProj=null;
 }
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeProjModal();});
+
 
 loadData();
 
