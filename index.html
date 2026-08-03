@@ -451,16 +451,12 @@ async function loadData(){
     projLog = d.projLog || {};
     dailyDate=d.dailyDate;
     dailyProjects=d.dailyProjects;
-    // localStorage 우선 (사용자가 수동으로 편집한 주간 데이터 유지)
-    // 단, localStorage 버전이 없으면 data.json으로 초기화
-    if(!sv){
-      weeks=JSON.parse(JSON.stringify(DEFAULT_WEEKS));
-      projects=JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
-      dailyLog=JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
-    } else {
-      // dailyLog는 항상 data.json 기준으로 최신 유지
-      dailyLog=JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
-    }
+    // data.json이 항상 마스터 데이터 — 매 로드마다 weeks/projects/dailyLog를 덮어씀
+    // (예전엔 localStorage에 저장된 값이 있으면 weeks/projects를 갱신하지 않아
+    //  주간 트랜드가 예전 주차에 멈춰있는 문제가 있었음)
+    weeks=JSON.parse(JSON.stringify(DEFAULT_WEEKS));
+    projects=JSON.parse(JSON.stringify(DEFAULT_PROJECTS));
+    dailyLog=JSON.parse(JSON.stringify(DEFAULT_DAILY_LOG));
   }catch(e){
     console.error('data.json 로드 실패:',e);
     // 로드 실패 시 localStorage 데이터라도 사용
@@ -502,19 +498,19 @@ function lastWeekIdx(){
   // 시스템 날짜 대신 dailyDate 기준으로 판단 (미리보기 환경 날짜 오류 방지)
   const today=parseDateStr(dailyDate)||new Date();today.setHours(0,0,0,0);
   const wt=wtots();
-  for(let i=4;i>=0;i--){
+  for(let i=weeks.length-1;i>=0;i--){
     if(!wt[i])continue;
     const ws=parseWeekStart(weeks[i]);
     if(!ws)continue;
     const sun=new Date(ws);sun.setDate(ws.getDate()+6);sun.setHours(0,0,0,0);
     if(sun<=today)return i;
   }
-  for(let i=4;i>=0;i--){
+  for(let i=weeks.length-1;i>=0;i--){
     if(!wt[i])continue;
     const ws=parseWeekStart(weeks[i]);
     if(ws)return i;
   }
-  return 3;
+  return Math.max(0,weeks.length-2);
 }
 
 /* 일간 → 주간 자동반영 */
